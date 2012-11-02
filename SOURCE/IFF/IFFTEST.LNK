@@ -1,0 +1,10 @@
+system dos4g option quiet debug all 
+file .\obj\ifftest.obj
+library .\iff.lib,
+ d:\miner\source\lib\vga.lib,
+ d:\miner\source\lib\gr.lib,
+ d:\miner\source\lib\mem.lib,
+ d:\miner\source\lib\misc.lib,
+ d:\miner\source\lib\cfile.lib,
+ d:\miner\source\lib\io.lib
+name .\ifftest

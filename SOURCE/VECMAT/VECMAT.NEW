@@ -1,0 +1,178 @@
+/*
+ * $Source: f:/miner/source/vecmat/rcs/vecmat.h $
+ * $Revision: 1.6 $
+ * $Author: mike $
+ * $Date: 1993/09/20 10:11:53 $
+ *
+ * Header file for vector/matrix library
+ *
+ * $Log: vecmat.h $
+ * Revision 1.6  1993/09/20  10:11:53  mike
+ * no changes
+ * 
+ * Revision 1.5  1993/09/20  09:58:58  mike
+ * Re-fix vm_vec_make
+ * 
+ * Revision 1.4  1993/09/20  09:41:21  mike
+ * Correct vm_vec_make and vm_mat_make macros to return the destination
+ * as the value of the macro.
+ * 
+ * Revision 1.3  1993/09/17  11:23:47  matt
+ * Added row access (via xrow,yrow,zrow) to vms_matrix
+ * Added macro vm_mat_make(), like vm_vec_make()
+ * 
+ * Revision 1.2  1993/09/17  11:10:32  matt
+ * Added vm_vec_add2() and vm_vec_sub2(), which take 2 args (dest==src0)
+ * 
+ * Revision 1.1  1993/09/16  20:10:01  matt
+ * Initial revision
+ * 
+ *
+ */
+
+#ifndef _VECMAT_H
+#define _VECMAT_H
+
+#include "fix.h"
+
+//The basic fixed-point vector.  Access elements by name or position
+typedef struct vms_vector {
+	union {
+		struct {fix x,y,z;};
+		fix xyz[3];
+	};
+} vms_vector;
+
+//Short vector, used for pre-rotation points. 
+//Access elements by name or position
+typedef struct vms_svec {
+	union {
+		struct {short sv_x,sv_y,sv_z;};
+		short xyz[3];
+	};
+} vms_svec;
+
+//Angle vector.  Used to store orientations
+typedef struct vms_angvec {
+	union {
+		struct {fixang pitch,bank,head;};
+		struct {fixang p,b,h;};
+	};
+} vms_angvec;
+
+//A 3x3 rotation matrix.  Sorry about the numbering starting with one.
+//Ordering is across then down, so <m1,m2,m3> is the first row
+typedef struct vms_matrix {
+	union {
+		struct {fix m1,m2,m3,m4,m5,m6,m7,m8,m9;};	//access by element name
+		fix m[9];											//..or by number
+		struct {vms_vector xrow,yrow,zrow;};
+	};
+} vms_matrix;
+
+//Macros
+
+//macro to fill in elements of a vector, for Mike
+#define vm_vec_make(v,_x,_y,_z) ((v), ((v)->x=(_x), (v)->y=(_y), (v)->z=(_z)))
+
+#if 0
+//macro to fill in elements of a matrix, also for Mike
+#define vm_mat_make(m,_m1,_m2,_m3,_m4,_m5,_m6,_m7,_m8,_m9) \
+	 do {	(m)->m1=(_m1); (m)->m2=(_m2); (m)->m3=(_m3); \
+			(m)->m4=(_m4); (m)->m5=(_m5); (m)->m6=(_m6); \
+			(m)->m7=(_m7); (m)->m8=(_m8); (m)->m9=(_m9);} while (0)
+#endif
+
+//macro to fill in elements of a matrix, also for Mike
+#define vm_mat_make(m,_m1,_m2,_m3,_m4,_m5,_m6,_m7,_m8,_m9) \
+	 	( ((m)->m1=(_m1), (m)->m2=(_m2), (m)->m3=(_m3), \
+			(m)->m4=(_m4), (m)->m5=(_m5), (m)->m6=(_m6), \
+			(m)->m7=(_m7), (m)->m8=(_m8), (m)->m9=(_m9)), (m))
+
+//Functions in library
+
+//adds two vectors, fills in dest, returns ptr to dest
+vms_vector *vm_vec_add(vms_vector *dest,vms_vector *src0,vms_vector *src1);
+
+//subs two vectors, fills in dest, returns ptr to dest
+vms_vector *vm_vec_sub(vms_vector *dest,vms_vector *src0,vms_vector *src1);
+
+//adds one vector to another. returns ptr to dest
+vms_vector *vm_vec_add2(vms_vector *dest,vms_vector *src);
+
+//subs one vector from another, returns ptr to dest
+vms_vector *vm_vec_sub2(vms_vector *dest,vms_vector *src);
+
+//scales a vector in place.  returns ptr to vector
+vms_vector *vm_vec_scale(vms_vector *dest,fix s);
+
+//returns magnitude of a vector
+fix vm_vec_mag(vms_vector *v);
+
+//normalize a vector in place.  returns mag of source vec
+fix vm_vec_normalize(vms_vector *v);
+
+//returns dot product of two vectors
+fix vm_vec_dotprod(vms_vector *v0,vms_vector *v1);
+
+//computes cross product of two vectors. returns ptr to dest
+vms_vector *vm_vec_crossprod(vms_vector *dest,vms_vector *src0,vms_vector *scr1);
+
+//computes surface normal from three points. returns ptr to dest
+vms_vector *vm_vec_normal(vms_vector *dest,vms_vector *p0,vms_vector *p1,vms_vector *p2);
+
+//computes non-normalized surface normal from three points. 
+//returns ptr to dest
+vms_vector *vm_vec_perp(vms_vector *dest,vms_vector *p0,vms_vector *p1,vms_vector *p2);
+
+//computes a matrix from a set of three angles.  returns ptr to matrix
+vms_matrix *vm_angles_2_matrix(vms_matrix *m,vms_angvec *a);
+
+//rotates a vector through a matrix. returns ptr to dest vector
+vms_vector *vm_vec_rotate(vms_vector *dest,vms_vector *src,vms_matrix *m);
+
+//transpose a matrix in place. returns ptr to matrix
+vms_matrix *vm_transpose_matrix(vms_matrix *m);
+
+//copy and transpose a matrix. returns ptr to matrix
+vms_matrix *vm_copy_transpose_matrix(vms_matrix *dest,vms_matrix *src);
+
+//mulitply 2 matrices, fill in dest.  returns ptr to dest
+vms_matrix *vm_matrix_x_matrix(vms_matrix *dest,vms_matrix *src0,vms_matrix *src1);
+
+//extract angles from a matrix 
+vms_angvec *vm_extract_angles_matrix(vms_angvec *a,vms_matrix *m);
+
+//extract heading and pitch from a vector, assuming bank==0
+void vm_extract_angles_vector(fixang *head,fixang *pitch,vms_vector *v);
+
+
+//Pragmas for functions
+
+#pragma aux vm_vec_add "*" parm [eax] [esi] [edi] value [eax] modify exact [];
+#pragma aux vm_vec_sub "*" parm [eax] [esi] [edi] value [eax] modify exact [];
+#pragma aux vm_vec_add2 "*" parm [edi] [esi] value [edi] modify exact [];
+#pragma aux vm_vec_sub2 "*" parm [edi] [esi] value [edi] modify exact [];
+#pragma aux vm_vec_scale "*" parm [ebx] [ecx] value [ebx] modify exact [];
+#pragma aux vm_vec_mag "*" parm [esi] value [eax] modify exact [];
+#pragma aux vm_vec_normalize "*" parm [esi] value [ecx] modify exact [];
+#pragma aux vm_vec_dotprod "*" parm [esi] [edi] value [eax] modify exact [];
+#pragma aux vm_vec_crossprod "*" parm [eax esi edi] value [eax] modify exact [];
+#pragma aux vm_vec_normal "*" parm [ebx] [eax] [esi] [edi] value [eax] modify exact [];
+#pragma aux vm_vec_perp "*" parm [ebx] [eax] [esi] [edi] value [eax] modify exact [];
+#pragma aux vm_angles_2_matrix "*" parm [edi] [esi] value [edi] modify exact [];
+#pragma aux vm_vec_rotate "*" parm [eax] [esi] [edi] value [eax] modify exact [];
+#pragma aux vm_transpose_matrix "*" parm [edi] value [edi] modify exact [];
+#pragma aux vm_copy_transpose_matrix "*" parm [edi] [esi] value [edi] modify exact [];
+#pragma aux vm_matrix_x_matrix "*" parm [eax] [esi] [edi] value [eax] modify exact [];
+
+
+/*
+	Questions:
+
+	should simple functions like vec_add() and vec_sub() be macros?
+
+*/
+
+#endif
+

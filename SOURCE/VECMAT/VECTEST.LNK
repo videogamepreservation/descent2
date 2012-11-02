@@ -1,0 +1,6 @@
+system dos4g option quiet debug all 
+file .\obj\vectest.obj
+library .\vecmat.lib,
+ c:\miner\source\lib\io.lib,
+ c:\miner\source\lib\fix.lib
+name .\vectest

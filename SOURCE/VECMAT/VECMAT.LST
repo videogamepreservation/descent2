@@ -1,0 +1,2684 @@
+Microsoft (R) Macro Assembler Version 6.11		    04/10/96 12:57:34
+vecmat.asm						     Page 1 - 1
+
+
+				;
+				; $Source: f:/miner/source/vecmat/rcs/vecmat.asm $
+				; $Revision: 1.55 $
+				; $Author: matt $
+				; $Date: 1995/08/24 12:04:11 $
+				;
+				; Source for vector/matrix library
+				;
+				; $Log: vecmat.asm $
+				; Revision 1.55  1995/08/24  12:04:11  matt
+				; Fixed stack unbalance bug in vm_vec_scale2 when divisor was zero
+				; 
+				; Revision 1.54  1995/01/31  00:14:50  matt
+				; Took out int3 from dotprod overflow, since it saturates now
+				; 
+				; Revision 1.53  1994/12/14  18:29:33  matt
+				; Made dotprod overflow check stay in, and return saturated value
+				; 
+				; Revision 1.52  1994/12/14  12:34:13  matt
+				; Disabled now-unused vector_2_matrix_norm()
+				; 
+				; Revision 1.51  1994/12/13  16:55:13  matt
+				; Ripped out optimization from last version, which was bogus
+				; 
+				; Revision 1.50  1994/12/13  14:55:18  matt
+				; Use quick normalize in a couple of places where it was safe to do so
+				; 
+				; Revision 1.49  1994/12/13  14:44:12  matt
+				; Added vm_vector_2_matrix_norm()
+				; 
+				; Revision 1.48  1994/12/13  13:26:49  matt
+				; Fixed overflow check
+				; 
+				; Revision 1.47  1994/12/03  15:39:54  matt
+				; Gracefully handle some vector_2_matrix problems
+				; 
+				; Revision 1.46  1994/11/19  17:15:05  matt
+				; Assemble out some code not used in DESCENT
+				; 
+				; Revision 1.45  1994/11/17  11:41:05  matt
+				; Put handling in extract_angles_from_matrix to deal with bad matrices
+				; 
+				; Revision 1.44  1994/11/16  11:48:10  matt
+				; Added error checking to vm_extract_angles_matrix()
+				; 
+				; Revision 1.43  1994/09/19  22:00:10  matt
+				; Fixed register trash
+				; 
+				; Revision 1.42  1994/09/11  19:23:05  matt
+				; Added vm_vec_normalized_dir_quick()
+				; 
+				; Revision 1.41  1994/08/14  13:28:38  matt
+				; Put in check for zero-length vector in extract angles
+				; 
+				; Revision 1.40  1994/07/19  18:52:53  matt
+				; Added vm_vec_normalize_quick() and vm_vec_copy_normalize_quick()
+				; 
+				; Revision 1.39  1994/06/16  18:24:22  matt
+				; Added vm_vec_mag_quick()
+				; 
+				; Revision 1.38  1994/06/10  23:18:38  matt
+				; Added new code for vm_vec_ang_2_matrix() which may be better, but may
+				; not be.
+				; 
+				; Revision 1.37  1994/05/22  18:17:29  mike
+				; Optimize vm_vec_dist_quick, using jns in place of abs_eax.
+				; 
+				; Revision 1.36  1994/05/19  12:07:04  matt
+				; Fixed globals and macros and added a constant
+				; 
+				; Revision 1.35  1994/05/19  09:19:00  matt
+				; Made vm_vec_normalized_dir() return mag of vector
+				; 
+				; Revision 1.34  1994/05/18  22:28:01  matt
+				; Added function vm_vec_normalized_dir()
+				; Added C macros IS_ZERO_VEC(), vm_vec_zero(), and vm_set_identity()
+				; Added C global static vars vmd_zero_vector & vmd_identity_matrix
+				; 
+				; Revision 1.33  1994/05/18  21:44:16  matt
+				; Added functions:
+				;   vm_extract_angles_vector()
+				;   vm_extract_angles_vector_normalized()
+				;   vm_vec_copy_normalize()
+				; 
+				; Revision 1.32  1994/05/13  12:41:51  matt
+				; Added new function, vm_vec_dist_quick(), which does an approximation.
+				; 
+				; Revision 1.31  1994/05/04  17:41:31  mike
+				; Comment out debug_brk on null vector.
+				; 
+				; Revision 1.30  1994/04/15  21:41:31  matt
+				; Check for foward vector straigt up in extract angles routine
+				; 
+				; Revision 1.29  1994/03/30  15:45:05  matt
+				; Added two functions, vm_vec_scale_add() & vm_vec_scale_add2()
+				; 
+				; Revision 1.28  1994/02/26  19:23:35  matt
+				; Do an int3 when we get a null vector when computing surface normal
+				; 
+				; Revision 1.27  1994/02/10  18:29:45  matt
+				; Changed 'if DEBUG_ON' to 'ifndef NDEBUG'
+				; 
+				; Revision 1.26  1994/02/10  18:28:55  matt
+				; Fixed bugs in extract angles function
+				; 
+				; Revision 1.25  1994/01/31  22:46:07  matt
+				; Added vm_extract_angles_matrix() function
+				; 
+				; Revision 1.24  1994/01/30  19:29:55  matt
+				; Put in debug_brk when vm_vec_2_matrix got zero-length vector
+				; 
+				; Revision 1.23  1994/01/25  15:27:59  matt
+				; Added debugging check for dotprod overflow
+				; 
+				; Revision 1.22  1994/01/24  11:52:59  matt
+				; Added checking for dest==src for several functions where this is not allowed
+				; 
+				; Revision 1.21  1994/01/19  23:13:02  matt
+				; Fixed bug in vm_vec_ang_2_matrix()
+				; 
+				; Revision 1.20  1994/01/04  12:33:43  mike
+				; Prevent divide overflow in vm_vec_scale2
+				; 
+				; Revision 1.19  1993/12/21  19:46:26  matt
+				; Added function vm_dist_to_plane()
+				; 
+				; Revision 1.18  1993/12/13  17:26:23  matt
+				; Added vm_vec_dist()
+				; 
+				; Revision 1.17  1993/12/02  12:43:39  matt
+				; New functions: vm_vec_copy_scale(), vm_vec_scale2()
+				; 
+				; Revision 1.16  1993/10/29  22:39:29  matt
+				; Changed matrix order, making direction vectors the rows
+				; 
+				; Revision 1.15  1993/10/29  18:06:01  matt
+				; Fixed vm_vector_2_matrix() bug when forward vector was straight down
+				; 
+				; Revision 1.14  1993/10/26  18:51:26  matt
+				; Fixed some register trashes in vm_vec_ang_2_matrix()
+				; 
+				; Revision 1.13  1993/10/25  11:49:37  matt
+				; Made vm_vec_delta_ang() take optional forward vector to return signed delta
+				; 
+				; Revision 1.12  1993/10/20  01:09:42  matt
+				; Added vm_vec_delta_ang(), vm_vec_delta_ang_norm(), and vm_vec_ang_2_matrix()
+				; 
+				; Revision 1.11  1993/10/17  17:03:08  matt
+				; vm_vector_2_matrix() now takes optional right vector
+				; 
+				; Revision 1.10  1993/10/10  18:11:42  matt
+				; Changed angles_2_matrix so that heading & bank rotate in the 
+				; correct directions.
+				; 
+				; Revision 1.9  1993/09/30  16:17:59  matt
+				; Fixed bug in vector_2_matrix() by adding another normalize
+				; 
+				; Revision 1.8  1993/09/29  10:51:58  matt
+				; Fixed bad register trashes in crossprod, perp, & normal
+				; 
+				; Revision 1.7  1993/09/28  12:16:46  matt
+				; Fixed bugs in cross product
+				; Added func vm_vector_2_matrix()
+				; 
+				; Revision 1.6  1993/09/24  21:19:37  matt
+				; Added vm_vec_avg() and vm_vec_avg4()
+				; 
+				; Revision 1.5  1993/09/20  18:15:07  matt
+				; Trap zero-length vectors in vm_vec_normalize(), vm_vec_perp(), and vm_vec_normal()
+				; 
+				; Revision 1.4  1993/09/20  14:56:43  matt
+				; Fixed bug in vm_vec_normal(), made that routine normalize the results,
+				; and added new function vm_vec_perp().
+				; 
+				; Revision 1.3  1993/09/20  10:12:06  mike
+				; no changes
+				; 
+				; Revision 1.2  1993/09/17  11:10:33  matt
+				; Added vm_vec_add2() and vm_vec_sub2(), which take 2 args (dest==src0)
+				; 
+				; Revision 1.1  1993/09/16  20:10:24  matt
+				; Initial revision
+				; 
+				;
+				;
+
+				.386
+					option	oldstructs
+
+					.nolist
+					.list
+
+					assume	cs:_TEXT, ds:_DATA
+
+ 00000000			_DATA	segment	dword public USE32 'DATA'
+
+ 00000000 24 49 64 3A 20	rcsid	db	"$Id: vecmat.asm 1.55 1995/08/24 12:04:11 matt Exp $"
+	   76 65 63 6D 61
+	   74 2E 61 73 6D
+	   20 31 2E 35 35
+	   20 31 39 39 35
+	   2F 30 38 2F 32
+	   34 20 31 32 3A
+	   30 34 3A 31 31
+	   20 6D 61 74 74
+	   20 45 78 70 20
+	   24
+					even
+
+				;these symbols enable/disable code which is unused in DESCENT
+ = 00000000			AVG4_ENABLED	= 0
+ = 00000000			V2MN_ENABLED	= 0
+
+				;temporary vectors for surface normal calculation
+ 00000034 00000000		tempv0	vms_vector <>
+	   00000000
+	   00000000
+ 00000040 00000000		tempv1	vms_vector <>
+	   00000000
+	   00000000
+
+ 0000004C 00000000		xvec	vms_vector <>
+	   00000000
+	   00000000
+ 00000058 00000000		yvec	vms_vector <>
+	   00000000
+	   00000000
+ 00000064 00000000		zvec	vms_vector <>
+	   00000000
+	   00000000
+
+ 00000070 0000 0000 0000	tempav	vms_angvec <>
+
+				;sine & cosine values for angles_2_matrix
+ 00000076 00000000		sinp	fix	?
+ 0000007A 00000000		cosp	fix	?
+ 0000007E 00000000		sinb	fix	?
+ 00000082 00000000		cosb	fix	?
+ 00000086 00000000		sinh	fix	?
+ 0000008A 00000000		cosh	fix	?
+
+				;These should never be changed!
+ 0000008E			_vmd_zero_vector	label	vms_vector
+ 0000008E  00000000			fix	0,0,0
+	   00000000
+	   00000000
+
+ 0000009A			_vmd_identity_matrix label	vms_matrix
+ 0000009A  00010000			fix	f1_0,0,0
+	   00000000
+	   00000000
+ 000000A6  00000000			fix	0,f1_0,0
+	   00010000
+	   00000000
+ 000000B2  00000000			fix	0,0,f1_0
+	   00000000
+	   00010000
+				 
+ 00BE				_DATA	ends
+
+
+
+ 00000000			_TEXT	segment	dword public USE32 'CODE'
+
+				;add two vectors, filling in dest
+				;takes eax=dest, esi,edi=sources, returns eax=dest
+ 00000000  53			vm_vec_add:	push	ebx	;save work reg
+
+					for	ofs,<x,y,z>
+					 mov	ebx,[esi].ofs
+					 add	ebx,[edi].ofs
+					 mov	[eax].ofs,ebx
+					endm
+ 00000001  8B 1E	     1		 mov	ebx,[esi].x
+ 00000003  03 1F	     1		 add	ebx,[edi].x
+ 00000005  89 18	     1		 mov	[eax].x,ebx
+ 00000007  8B 5E 04	     1		 mov	ebx,[esi].y
+ 0000000A  03 5F 04	     1		 add	ebx,[edi].y
+ 0000000D  89 58 04	     1		 mov	[eax].y,ebx
+ 00000010  8B 5E 08	     1		 mov	ebx,[esi].z
+ 00000013  03 5F 08	     1		 add	ebx,[edi].z
+ 00000016  89 58 08	     1		 mov	[eax].z,ebx
+
+ 00000019  5B				pop	ebx
+
+ 0000001A  C3				ret
+
+				;subtracts two vectors, filling in dest
+				;takes eax=dest, esi,edi=sources, returns eax=dest
+ 0000001B  53			vm_vec_sub:	push	ebx	;save work reg
+
+					for	ofs,<x,y,z>
+					 mov	ebx,[esi].ofs
+					 sub	ebx,[edi].ofs
+					 mov	[eax].ofs,ebx
+					endm
+ 0000001C  8B 1E	     1		 mov	ebx,[esi].x
+ 0000001E  2B 1F	     1		 sub	ebx,[edi].x
+ 00000020  89 18	     1		 mov	[eax].x,ebx
+ 00000022  8B 5E 04	     1		 mov	ebx,[esi].y
+ 00000025  2B 5F 04	     1		 sub	ebx,[edi].y
+ 00000028  89 58 04	     1		 mov	[eax].y,ebx
+ 0000002B  8B 5E 08	     1		 mov	ebx,[esi].z
+ 0000002E  2B 5F 08	     1		 sub	ebx,[edi].z
+ 00000031  89 58 08	     1		 mov	[eax].z,ebx
+
+ 00000034  5B				pop	ebx
+
+ 00000035  C3				ret
+
+
+				;adds one vector to antother
+				;takes edi=dest, esi=source, returns edi=dest
+ 00000036  53			vm_vec_add2:	push	ebx	;save work reg
+
+					for	ofs,<x,y,z>
+					 mov	ebx,[esi].ofs
+					 add	[edi].ofs,ebx
+					endm
+ 00000037  8B 1E	     1		 mov	ebx,[esi].x
+ 00000039  01 1F	     1		 add	[edi].x,ebx
+ 0000003B  8B 5E 04	     1		 mov	ebx,[esi].y
+ 0000003E  01 5F 04	     1		 add	[edi].y,ebx
+ 00000041  8B 5E 08	     1		 mov	ebx,[esi].z
+ 00000044  01 5F 08	     1		 add	[edi].z,ebx
+
+ 00000047  5B				pop	ebx
+
+ 00000048  C3				ret
+
+				;subtract one vector from another
+				;takes edi=dest, esi=source, returns edi=dest
+ 00000049  53			vm_vec_sub2:	push	ebx	;save work reg
+
+					for	ofs,<x,y,z>
+					 mov	ebx,[esi].ofs
+					 sub	[edi].ofs,ebx
+					endm
+ 0000004A  8B 1E	     1		 mov	ebx,[esi].x
+ 0000004C  29 1F	     1		 sub	[edi].x,ebx
+ 0000004E  8B 5E 04	     1		 mov	ebx,[esi].y
+ 00000051  29 5F 04	     1		 sub	[edi].y,ebx
+ 00000054  8B 5E 08	     1		 mov	ebx,[esi].z
+ 00000057  29 5F 08	     1		 sub	[edi].z,ebx
+
+ 0000005A  5B				pop	ebx
+
+ 0000005B  C3				ret
+
+				;averages two vectors. takes eax=dest, esi,edi=srcs
+ 0000005C  53			vm_vec_avg:	push	ebx
+
+					for	ofs,<x,y,z>
+					 mov	ebx,[esi].ofs
+					 add	ebx,[edi].ofs
+					 sar	ebx,1
+					 mov	[eax].ofs,ebx
+					endm
+ 0000005D  8B 1E	     1		 mov	ebx,[esi].x
+ 0000005F  03 1F	     1		 add	ebx,[edi].x
+ 00000061  D1 FB	     1		 sar	ebx,1
+ 00000063  89 18	     1		 mov	[eax].x,ebx
+ 00000065  8B 5E 04	     1		 mov	ebx,[esi].y
+ 00000068  03 5F 04	     1		 add	ebx,[edi].y
+ 0000006B  D1 FB	     1		 sar	ebx,1
+ 0000006D  89 58 04	     1		 mov	[eax].y,ebx
+ 00000070  8B 5E 08	     1		 mov	ebx,[esi].z
+ 00000073  03 5F 08	     1		 add	ebx,[edi].z
+ 00000076  D1 FB	     1		 sar	ebx,1
+ 00000078  89 58 08	     1		 mov	[eax].z,ebx
+
+ 0000007B  5B				pop	ebx
+ 0000007C  C3				ret
+
+					if	AVG4_ENABLED
+					endif
+
+				;scales a vector in place.  takes ebx=vector, ecx=scale. returns ebx=vector
+ 0000007D			vm_vec_scale:	pushm	eax,edx
+ 0000007D  50		     2		 push	eax
+ 0000007E  52		     2		 push	edx
+
+					for	ofs,<x,y,z>
+					 mov	eax,[ebx].ofs
+					 fixmul	ecx
+					 mov	[ebx].ofs,eax
+					endm
+ 0000007F  8B 03	     1		 mov	eax,[ebx].x
+ 00000081  F7 E9	     2		imul	ecx
+ 00000083  0F AC D0 10	     2		shrd	eax,edx,16
+ 00000087  89 03	     1		 mov	[ebx].x,eax
+ 00000089  8B 43 04	     1		 mov	eax,[ebx].y
+ 0000008C  F7 E9	     2		imul	ecx
+ 0000008E  0F AC D0 10	     2		shrd	eax,edx,16
+ 00000092  89 43 04	     1		 mov	[ebx].y,eax
+ 00000095  8B 43 08	     1		 mov	eax,[ebx].z
+ 00000098  F7 E9	     2		imul	ecx
+ 0000009A  0F AC D0 10	     2		shrd	eax,edx,16
+ 0000009E  89 43 08	     1		 mov	[ebx].z,eax
+
+					popm	eax,edx
+ 000000A1  5A		     2		 pop	edx
+ 000000A2  58		     2		 pop	eax
+ 000000A3  C3				ret
+
+				;scales and copies a vector.  takes edi=dest, ebx=src, ecx=scale. returns edi=vector
+ 000000A4			vm_vec_copy_scale:	pushm	eax,edx
+ 000000A4  50		     2		 push	eax
+ 000000A5  52		     2		 push	edx
+
+					for	ofs,<x,y,z>
+					 mov	eax,[ebx].ofs
+					 fixmul	ecx
+					 mov	[edi].ofs,eax
+					endm
+ 000000A6  8B 03	     1		 mov	eax,[ebx].x
+ 000000A8  F7 E9	     2		imul	ecx
+ 000000AA  0F AC D0 10	     2		shrd	eax,edx,16
+ 000000AE  89 07	     1		 mov	[edi].x,eax
+ 000000B0  8B 43 04	     1		 mov	eax,[ebx].y
+ 000000B3  F7 E9	     2		imul	ecx
+ 000000B5  0F AC D0 10	     2		shrd	eax,edx,16
+ 000000B9  89 47 04	     1		 mov	[edi].y,eax
+ 000000BC  8B 43 08	     1		 mov	eax,[ebx].z
+ 000000BF  F7 E9	     2		imul	ecx
+ 000000C1  0F AC D0 10	     2		shrd	eax,edx,16
+ 000000C5  89 47 08	     1		 mov	[edi].z,eax
+
+					popm	eax,edx
+ 000000C8  5A		     2		 pop	edx
+ 000000C9  58		     2		 pop	eax
+ 000000CA  C3				ret
+
+				;scales a vector, adds it to another, and stores in a 3rd
+				;takes edi=dest, ebx=src1, esi=src2, ecx=scale. returns edi=vector
+ 000000CB			vm_vec_scale_add:	pushm	eax,edx
+ 000000CB  50		     2		 push	eax
+ 000000CC  52		     2		 push	edx
+
+					for	ofs,<x,y,z>
+					 mov	eax,[esi].ofs
+					 fixmul	ecx
+					 add	eax,[ebx].ofs
+					 mov	[edi].ofs,eax
+					endm
+ 000000CD  8B 06	     1		 mov	eax,[esi].x
+ 000000CF  F7 E9	     2		imul	ecx
+ 000000D1  0F AC D0 10	     2		shrd	eax,edx,16
+ 000000D5  03 03	     1		 add	eax,[ebx].x
+ 000000D7  89 07	     1		 mov	[edi].x,eax
+ 000000D9  8B 46 04	     1		 mov	eax,[esi].y
+ 000000DC  F7 E9	     2		imul	ecx
+ 000000DE  0F AC D0 10	     2		shrd	eax,edx,16
+ 000000E2  03 43 04	     1		 add	eax,[ebx].y
+ 000000E5  89 47 04	     1		 mov	[edi].y,eax
+ 000000E8  8B 46 08	     1		 mov	eax,[esi].z
+ 000000EB  F7 E9	     2		imul	ecx
+ 000000ED  0F AC D0 10	     2		shrd	eax,edx,16
+ 000000F1  03 43 08	     1		 add	eax,[ebx].z
+ 000000F4  89 47 08	     1		 mov	[edi].z,eax
+
+					popm	eax,edx
+ 000000F7  5A		     2		 pop	edx
+ 000000F8  58		     2		 pop	eax
+ 000000F9  C3				ret
+
+				;scales a vector and adds it to another.  takes edi=dest, esi=src, ecx=scale. returns edi=vector
+ 000000FA			vm_vec_scale_add2:	pushm	eax,edx
+ 000000FA  50		     2		 push	eax
+ 000000FB  52		     2		 push	edx
+
+					for	ofs,<x,y,z>
+					 mov	eax,[esi].ofs
+					 fixmul	ecx
+					 add	[edi].ofs,eax
+					endm
+ 000000FC  8B 06	     1		 mov	eax,[esi].x
+ 000000FE  F7 E9	     2		imul	ecx
+ 00000100  0F AC D0 10	     2		shrd	eax,edx,16
+ 00000104  01 07	     1		 add	[edi].x,eax
+ 00000106  8B 46 04	     1		 mov	eax,[esi].y
+ 00000109  F7 E9	     2		imul	ecx
+ 0000010B  0F AC D0 10	     2		shrd	eax,edx,16
+ 0000010F  01 47 04	     1		 add	[edi].y,eax
+ 00000112  8B 46 08	     1		 mov	eax,[esi].z
+ 00000115  F7 E9	     2		imul	ecx
+ 00000117  0F AC D0 10	     2		shrd	eax,edx,16
+ 0000011B  01 47 08	     1		 add	[edi].z,eax
+
+					popm	eax,edx
+ 0000011E  5A		     2		 pop	edx
+ 0000011F  58		     2		 pop	eax
+ 00000120  C3				ret
+
+				;scales a vector in place, taking n/d for scale.  takes edi=vector, ebx=n,ecx=d. returns edi=vector
+ 00000121  0B C9		vm_vec_scale2:	or	ecx,ecx	; @mk, 01/04/94, prevent divide overflow
+ 00000123  74 20			je	vmvs_out
+
+					pushm	eax,edx
+ 00000125  50		     2		 push	eax
+ 00000126  52		     2		 push	edx
+					for	ofs,<x,y,z>
+					 mov	eax,[edi].ofs
+					 imul	ebx
+					 idiv	ecx
+					 mov	[edi].ofs,eax
+					endm
+ 00000127  8B 07	     1		 mov	eax,[edi].x
+ 00000129  F7 EB	     1		 imul	ebx
+ 0000012B  F7 F9	     1		 idiv	ecx
+ 0000012D  89 07	     1		 mov	[edi].x,eax
+ 0000012F  8B 47 04	     1		 mov	eax,[edi].y
+ 00000132  F7 EB	     1		 imul	ebx
+ 00000134  F7 F9	     1		 idiv	ecx
+ 00000136  89 47 04	     1		 mov	[edi].y,eax
+ 00000139  8B 47 08	     1		 mov	eax,[edi].z
+ 0000013C  F7 EB	     1		 imul	ebx
+ 0000013E  F7 F9	     1		 idiv	ecx
+ 00000140  89 47 08	     1		 mov	[edi].z,eax
+					popm	eax,edx
+ 00000143  5A		     2		 pop	edx
+ 00000144  58		     2		 pop	eax
+
+ 00000145  C3			vmvs_out:	ret
+
+				;compute the distance between two points. (does sub and mag)
+				;takes esi,edi=points, returns eax=dist
+ 00000146			vm_vec_dist:	pushm	ebx,ecx,edx
+ 00000146  53		     2		 push	ebx
+ 00000147  51		     2		 push	ecx
+ 00000148  52		     2		 push	edx
+
+ 00000149  8B 06			mov	eax,[esi].x
+ 0000014B  2B 07			sub	eax,[edi].x
+ 0000014D  F7 E8			imul	eax
+ 0000014F  8B D8			mov	ebx,eax
+ 00000151  8B CA			mov	ecx,edx
+
+ 00000153  8B 46 04			mov	eax,[esi].y
+ 00000156  2B 47 04			sub	eax,[edi].y
+ 00000159  F7 E8			imul	eax
+ 0000015B  03 D8			add	ebx,eax
+ 0000015D  13 CA			adc	ecx,edx
+
+ 0000015F  8B 46 08			mov	eax,[esi].z
+ 00000162  2B 47 08			sub	eax,[edi].z
+ 00000165  F7 E8			imul	eax
+ 00000167  03 C3			add	eax,ebx
+ 00000169  13 D1			adc	edx,ecx
+
+ 0000016B  E8 00000000 E		call	quad_sqrt
+
+					popm	ebx,ecx,edx
+ 00000170  5A		     2		 pop	edx
+ 00000171  59		     2		 pop	ecx
+ 00000172  5B		     2		 pop	ebx
+ 00000173  C3				ret
+
+
+				;computes an approximation of the magnitude of a vector
+				;uses dist = largest + next_largest*3/8 + smallest*3/16
+				;takes esi=vector, returns eax=dist
+					align	4
+ 00000174			vm_vec_mag_quick:	pushm	ebx,ecx,edx
+ 00000174  53		     2		 push	ebx
+ 00000175  51		     2		 push	ecx
+ 00000176  52		     2		 push	edx
+
+ 00000177  8B 06			mov	eax,[esi].x
+ 00000179  0B C0			or	eax,eax
+ 0000017B  79 02			jns	eax_ok2
+ 0000017D  F7 D8			neg	eax
+ 0000017F			eax_ok2:
+
+ 0000017F  8B 5E 04			mov	ebx,[esi].y
+ 00000182  0B DB			or	ebx,ebx
+ 00000184  79 02			jns	ebx_ok2
+ 00000186  F7 DB			neg	ebx
+ 00000188			ebx_ok2:
+
+ 00000188  8B 4E 08			mov	ecx,[esi].z
+ 0000018B  0B C9			or	ecx,ecx
+ 0000018D  79 02			jns	ecx_ok2
+ 0000018F  F7 D9			neg	ecx
+ 00000191			ecx_ok2:
+
+ 00000191			mag_quick_eax_ebx_ecx:
+
+ 00000191  3B C3			cmp	eax,ebx
+ 00000193  7F 01			jg	no_swap_ab
+ 00000195  93				xchg	eax,ebx
+ 00000196  3B D9		no_swap_ab:	cmp	ebx,ecx
+ 00000198  7F 07			jg	do_add
+ 0000019A  87 D9			xchg	ebx,ecx
+ 0000019C  3B C3			cmp	eax,ebx
+ 0000019E  7F 01			jg	do_add
+ 000001A0  93				xchg	eax,ebx
+
+ 000001A1  C1 FB 02		do_add:	sar	ebx,2	;    b*1/4
+ 000001A4  C1 F9 03			sar	ecx,3	;            c*1/8
+ 000001A7  03 D9			add	ebx,ecx	;    b*1/4 + c*1/8
+ 000001A9  03 C3			add	eax,ebx	;a + b*1/4 + c*1/8
+ 000001AB  D1 FB			sar	ebx,1	;    b*1/8 + c*1/16
+ 000001AD  03 C3			add	eax,ebx	;a + b*3/4 + c*3/16
+
+					popm	ebx,ecx,edx
+ 000001AF  5A		     2		 pop	edx
+ 000001B0  59		     2		 pop	ecx
+ 000001B1  5B		     2		 pop	ebx
+ 000001B2  C3				ret
+
+				;computes an approximation of the distance between two points.
+				;uses dist = largest + next_largest*3/8 + smallest*3/16
+				;takes esi,edi=points, returns eax=dist
+					align	4
+ 000001B4			vm_vec_dist_quick:	pushm	ebx,ecx,edx
+ 000001B4  53		     2		 push	ebx
+ 000001B5  51		     2		 push	ecx
+ 000001B6  52		     2		 push	edx
+
+ 000001B7  8B 1E			mov	ebx,[esi].x
+ 000001B9  2B 1F			sub	ebx,[edi].x
+ 000001BB  79 02			jns	ebx_ok
+ 000001BD  F7 DB			neg	ebx
+ 000001BF			ebx_ok:
+
+ 000001BF  8B 4E 04			mov	ecx,[esi].y
+ 000001C2  2B 4F 04			sub	ecx,[edi].y
+ 000001C5  79 02			jns	ecx_ok
+ 000001C7  F7 D9			neg	ecx
+ 000001C9			ecx_ok:
+ 000001C9  8B 46 08			mov	eax,[esi].z
+ 000001CC  2B 47 08			sub	eax,[edi].z
+ 000001CF  79 02			jns	eax_ok
+ 000001D1  F7 D8			neg	eax
+ 000001D3			eax_ok:
+ 000001D3  EB BC			jmp	mag_quick_eax_ebx_ecx
+
+
+				;compute magnitude of vector. takes esi=vector, returns eax=mag
+ 000001D5			vm_vec_mag:	pushm	ebx,ecx,edx
+ 000001D5  53		     2		 push	ebx
+ 000001D6  51		     2		 push	ecx
+ 000001D7  52		     2		 push	edx
+
+ 000001D8  8B 06			mov	eax,[esi].x
+ 000001DA  F7 E8			imul	eax
+ 000001DC  8B D8			mov	ebx,eax
+ 000001DE  8B CA			mov	ecx,edx
+
+ 000001E0  8B 46 04			mov	eax,[esi].y
+ 000001E3  F7 E8			imul	eax
+ 000001E5  03 D8			add	ebx,eax
+ 000001E7  13 CA			adc	ecx,edx
+
+ 000001E9  8B 46 08			mov	eax,[esi].z
+ 000001EC  F7 E8			imul	eax
+ 000001EE  03 C3			add	eax,ebx
+ 000001F0  13 D1			adc	edx,ecx
+
+ 000001F2  E8 00000000 E		call	quad_sqrt
+
+					popm	ebx,ecx,edx
+ 000001F7  5A		     2		 pop	edx
+ 000001F8  59		     2		 pop	ecx
+ 000001F9  5B		     2		 pop	ebx
+ 000001FA  C3				ret
+
+
+				;return the normalized direction vector between two points
+				;dest = normalized(end - start).
+				;takes edi=dest, esi=endpoint, ebx=startpoint.  Returns mag of dir vec
+				;NOTE: the order of the parameters matches the vector subtraction
+ 000001FB			vm_vec_normalized_dir:
+					pushm	ebp,eax,ebx,edx
+ 000001FB  55		     2		 push	ebp
+ 000001FC  50		     2		 push	eax
+ 000001FD  53		     2		 push	ebx
+ 000001FE  52		     2		 push	edx
+ 000001FF  8B EB			mov	ebp,ebx
+
+ 00000201  8B 06			mov	eax,[esi].x
+ 00000203  2B 45 00			sub	eax,[ebp].x
+ 00000206  89 07			mov	[edi].x,eax
+ 00000208  F7 E8			imul	eax
+ 0000020A  8B D8			mov	ebx,eax
+ 0000020C  8B CA			mov	ecx,edx
+
+ 0000020E  8B 46 04			mov	eax,[esi].y
+ 00000211  2B 45 04			sub	eax,[ebp].y
+ 00000214  89 47 04			mov	[edi].y,eax
+ 00000217  F7 E8			imul	eax
+ 00000219  03 D8			add	ebx,eax
+ 0000021B  13 CA			adc	ecx,edx
+
+ 0000021D  8B 46 08			mov	eax,[esi].z
+ 00000220  2B 45 08			sub	eax,[ebp].z
+ 00000223  89 47 08			mov	[edi].z,eax
+ 00000226  F7 E8			imul	eax
+ 00000228  03 C3			add	eax,ebx
+ 0000022A  13 D1			adc	edx,ecx
+
+ 0000022C  E8 00000000 E		call	quad_sqrt
+
+ 00000231  8B C8			mov	ecx,eax	;mag in ecx
+ 00000233  E3 2E			jecxz	no_div2
+
+					for	ofs,<x,y,z>
+					 mov	eax,[edi].ofs
+					 fixdiv	ecx
+					 mov	[edi].ofs,eax
+					endm
+ 00000235  8B 07	     1		 mov	eax,[edi].x
+ 00000237  8B D0	     2		mov	edx,eax
+ 00000239  C1 FA 10	     2		sar	edx,16
+ 0000023C  C1 E0 10	     2		shl	eax,16
+ 0000023F  F7 F9	     2		idiv	ecx
+ 00000241  89 07	     1		 mov	[edi].x,eax
+ 00000243  8B 47 04	     1		 mov	eax,[edi].y
+ 00000246  8B D0	     2		mov	edx,eax
+ 00000248  C1 FA 10	     2		sar	edx,16
+ 0000024B  C1 E0 10	     2		shl	eax,16
+ 0000024E  F7 F9	     2		idiv	ecx
+ 00000250  89 47 04	     1		 mov	[edi].y,eax
+ 00000253  8B 47 08	     1		 mov	eax,[edi].z
+ 00000256  8B D0	     2		mov	edx,eax
+ 00000258  C1 FA 10	     2		sar	edx,16
+ 0000025B  C1 E0 10	     2		shl	eax,16
+ 0000025E  F7 F9	     2		idiv	ecx
+ 00000260  89 47 08	     1		 mov	[edi].z,eax
+
+ 00000263			no_div2:
+					;return value (mag) in ecx
+
+					popm	ebp,eax,ebx,edx
+ 00000263  5A		     2		 pop	edx
+ 00000264  5B		     2		 pop	ebx
+ 00000265  58		     2		 pop	eax
+ 00000266  5D		     2		 pop	ebp
+ 00000267  C3				ret
+
+					
+				;save as vm_vec_normalized_dir, but with quick sqrt
+				;takes edi=dest, esi=endpoint, ebx=startpoint.  Returns mag of dir vec
+ 00000268			vm_vec_normalized_dir_quick:
+					pushm	eax,edi,esi
+ 00000268  50		     2		 push	eax
+ 00000269  57		     2		 push	edi
+ 0000026A  56		     2		 push	esi
+
+ 0000026B  8B C7			mov	eax,edi
+ 0000026D  8B FB			mov	edi,ebx	;regs right for sub
+ 0000026F  E8 FFFFFDA7			call	vm_vec_sub
+
+ 00000274  8B F0			mov	esi,eax
+ 00000276  E8 00000066			call	vm_vec_normalize_quick
+
+					;return value (mag) in ecx
+
+					popm	eax,edi,esi
+ 0000027B  5E		     2		 pop	esi
+ 0000027C  5F		     2		 pop	edi
+ 0000027D  58		     2		 pop	eax
+ 0000027E  C3				ret
+
+					
+
+				;normalize a vector in place.  takes esi=vector
+				;returns ecx=mag of source vec. trashes edi
+ 0000027F  57			vm_vec_normalize:	push	edi
+ 00000280  8B FE			mov	edi,esi
+ 00000282  E8 00000002			call	vm_vec_copy_normalize
+ 00000287  5F				pop	edi
+ 00000288  C3				ret
+
+				;normalize a vector.  takes edi=dest, esi=vector
+				;returns ecx=mag of source vec
+ 00000289			vm_vec_copy_normalize:
+					pushm	eax,ebx,edx
+ 00000289  50		     2		 push	eax
+ 0000028A  53		     2		 push	ebx
+ 0000028B  52		     2		 push	edx
+
+ 0000028C  8B 06			mov	eax,[esi].x
+ 0000028E  F7 E8			imul	eax
+ 00000290  8B D8			mov	ebx,eax
+ 00000292  8B CA			mov	ecx,edx
+
+ 00000294  8B 46 04			mov	eax,[esi].y
+ 00000297  F7 E8			imul	eax
+ 00000299  03 D8			add	ebx,eax
+ 0000029B  13 CA			adc	ecx,edx
+
+ 0000029D  8B 46 08			mov	eax,[esi].z
+ 000002A0  F7 E8			imul	eax
+ 000002A2  03 C3			add	eax,ebx
+ 000002A4  13 D1			adc	edx,ecx
+
+ 000002A6  E8 00000000 E		call	quad_sqrt
+
+ 000002AB  8B C8			mov	ecx,eax	;mag in ecx
+ 000002AD  E3 2E			jecxz	no_div
+
+					for	ofs,<x,y,z>
+					 mov	eax,[esi].ofs
+					 fixdiv	ecx
+					 mov	[edi].ofs,eax
+					endm
+ 000002AF  8B 06	     1		 mov	eax,[esi].x
+ 000002B1  8B D0	     2		mov	edx,eax
+ 000002B3  C1 FA 10	     2		sar	edx,16
+ 000002B6  C1 E0 10	     2		shl	eax,16
+ 000002B9  F7 F9	     2		idiv	ecx
+ 000002BB  89 07	     1		 mov	[edi].x,eax
+ 000002BD  8B 46 04	     1		 mov	eax,[esi].y
+ 000002C0  8B D0	     2		mov	edx,eax
+ 000002C2  C1 FA 10	     2		sar	edx,16
+ 000002C5  C1 E0 10	     2		shl	eax,16
+ 000002C8  F7 F9	     2		idiv	ecx
+ 000002CA  89 47 04	     1		 mov	[edi].y,eax
+ 000002CD  8B 46 08	     1		 mov	eax,[esi].z
+ 000002D0  8B D0	     2		mov	edx,eax
+ 000002D2  C1 FA 10	     2		sar	edx,16
+ 000002D5  C1 E0 10	     2		shl	eax,16
+ 000002D8  F7 F9	     2		idiv	ecx
+ 000002DA  89 47 08	     1		 mov	[edi].z,eax
+
+ 000002DD			no_div:	popm	eax,ebx,edx
+ 000002DD  5A		     2		 pop	edx
+ 000002DE  5B		     2		 pop	ebx
+ 000002DF  58		     2		 pop	eax
+
+ 000002E0  C3				ret
+
+				;normalize a vector in place.  takes esi=vector
+				;returns ecx=mag of source vec. trashes edi
+				;uses approx. dist
+ 000002E1			vm_vec_normalize_quick:
+ 000002E1  57				push	edi
+ 000002E2  8B FE			mov	edi,esi
+ 000002E4  E8 00000002			call	vm_vec_copy_normalize_quick
+ 000002E9  5F				pop	edi
+ 000002EA  C3				ret
+
+				;normalize a vector.  takes edi=dest, esi=vector
+				;returns ecx=mag of source vec
+				;uses approx. dist
+ 000002EB			vm_vec_copy_normalize_quick:
+					pushm	eax,ebx,edx
+ 000002EB  50		     2		 push	eax
+ 000002EC  53		     2		 push	ebx
+ 000002ED  52		     2		 push	edx
+
+ 000002EE  E8 FFFFFE81			call	vm_vec_mag_quick
+
+ 000002F3  8B C8			mov	ecx,eax	;mag in ecx
+ 000002F5  E3 2E			jecxz	no_div_q
+
+					for	ofs,<x,y,z>
+					 mov	eax,[esi].ofs
+					 fixdiv	ecx
+					 mov	[edi].ofs,eax
+					endm
+ 000002F7  8B 06	     1		 mov	eax,[esi].x
+ 000002F9  8B D0	     2		mov	edx,eax
+ 000002FB  C1 FA 10	     2		sar	edx,16
+ 000002FE  C1 E0 10	     2		shl	eax,16
+ 00000301  F7 F9	     2		idiv	ecx
+ 00000303  89 07	     1		 mov	[edi].x,eax
+ 00000305  8B 46 04	     1		 mov	eax,[esi].y
+ 00000308  8B D0	     2		mov	edx,eax
+ 0000030A  C1 FA 10	     2		sar	edx,16
+ 0000030D  C1 E0 10	     2		shl	eax,16
+ 00000310  F7 F9	     2		idiv	ecx
+ 00000312  89 47 04	     1		 mov	[edi].y,eax
+ 00000315  8B 46 08	     1		 mov	eax,[esi].z
+ 00000318  8B D0	     2		mov	edx,eax
+ 0000031A  C1 FA 10	     2		sar	edx,16
+ 0000031D  C1 E0 10	     2		shl	eax,16
+ 00000320  F7 F9	     2		idiv	ecx
+ 00000322  89 47 08	     1		 mov	[edi].z,eax
+
+ 00000325			no_div_q:	popm	eax,ebx,edx
+ 00000325  5A		     2		 pop	edx
+ 00000326  5B		     2		 pop	ebx
+ 00000327  58		     2		 pop	eax
+
+ 00000328  C3				ret
+
+				;compute dot product of two vectors. takes esi,edi=vectors, returns eax=dotprod
+ 00000329			vm_vec_dotprod:	pushm	ebx,ecx,edx
+ 00000329  53		     2		 push	ebx
+ 0000032A  51		     2		 push	ecx
+ 0000032B  52		     2		 push	edx
+
+ 0000032C  8B 06			mov	eax,[esi].x
+ 0000032E  F7 2F			imul	[edi].x
+ 00000330  8B D8			mov	ebx,eax
+ 00000332  8B CA			mov	ecx,edx
+
+ 00000334  8B 46 04			mov	eax,[esi].y
+ 00000337  F7 6F 04			imul	[edi].y
+ 0000033A  03 D8			add	ebx,eax
+ 0000033C  13 CA			adc	ecx,edx
+
+ 0000033E  8B 46 08			mov	eax,[esi].z
+ 00000341  F7 6F 08			imul	[edi].z
+ 00000344  03 C3			add	eax,ebx
+ 00000346  13 D1			adc	edx,ecx
+
+ 00000348  0F AC D0 10			shrd	eax,edx,16
+
+					;ifndef	NDEBUG	;check for overflow
+					;always do overflow check, and return saturated value
+ 0000034C  C1 FA 10			sar	edx,16	;get real sign from high word
+ 0000034F  8B DA			mov	ebx,edx
+ 00000351  99				cdq		;get sign of our result 
+ 00000352  66| 3B DA			cmp	bx,dx	;same sign?
+ 00000355  74 0B			je	no_oflow
+					;;debug_brk	'overflow in vm_vec_dotprod'
+ 00000357  B8 7FFFFFFF			mov	eax,7fffffffh
+ 0000035C  0B DB			or	ebx,ebx	;check desired sign
+ 0000035E  79 02			jns	no_oflow
+ 00000360  F7 D8			neg	eax
+ 00000362			no_oflow:
+					;endif
+
+					popm	ebx,ecx,edx
+ 00000362  5A		     2		 pop	edx
+ 00000363  59		     2		 pop	ecx
+ 00000364  5B		     2		 pop	ebx
+
+ 00000365  C3				ret
+
+
+				;computes cross product of two vectors. takes eax=dest, esi,edi=src vectors
+				;returns eax=dest.  Note: this magnitude of the resultant vector is the
+				;product of the magnitudes of the two source vectors.  This means it is
+				;quite easy for this routine to overflow and underflow.  Be careful that
+				;your inputs are ok.
+ 00000366			vm_vec_crossprod:
+					ifndef	NDEBUG
+ 00000366  3B C6			 cmp	eax,esi
+					 break_if	e,'crossprod: dest==src0'
+ 00000368  74 02	     1		 je	??0036
+ 0000036A  EB 2E	     1		 jmp	??0035
+ 0000036C
+ 0000036C  66| 9C	     3		 pushf		;save flags
+ 0000036E  50		     3		 push	eax	;mprintf trashes eax
+ 0000036F  EB 16	     4		jmp	??0038
+ 00000371		     4	??0037	label	byte
+ 00000371  63 72 6F 73 73    5		 %db	'&@SubStr('crossprod: dest==src0',??003A-??003C,??003B-??003A)'
+	   70 72 6F 64 3A
+	   20 64 65 73 74
+	   3D 3D 73 72 63
+	   30
+ 00000386  00		     4		db	0
+ 00000387		     4	??0038:
+ 00000387  68 00000371 R     7		 push	offset ??0037
+ 0000038C  6A 00	     7		 push	0
+ 0000038E  E8 00000000 E     4		call	mprintf_
+ 00000393  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 00000396  58		     3		 pop	eax
+ 00000397  66| 9D	     3		 popf
+ 00000399  CC		     2		 int	3
+ 0000039A		     1	??0035:
+ 0000039A  3B C7			 cmp	eax,edi
+					 break_if	e,'crossprod: dest==src1'
+ 0000039C  74 02	     1		 je	??0042
+ 0000039E  EB 2E	     1		 jmp	??0041
+ 000003A0
+ 000003A0  66| 9C	     3		 pushf		;save flags
+ 000003A2  50		     3		 push	eax	;mprintf trashes eax
+ 000003A3  EB 16	     4		jmp	??0044
+ 000003A5		     4	??0043	label	byte
+ 000003A5  63 72 6F 73 73    5		 %db	'&@SubStr('crossprod: dest==src1',??0046-??0048,??0047-??0046)'
+	   70 72 6F 64 3A
+	   20 64 65 73 74
+	   3D 3D 73 72 63
+	   31
+ 000003BA  00		     4		db	0
+ 000003BB		     4	??0044:
+ 000003BB  68 000003A5 R     7		 push	offset ??0043
+ 000003C0  6A 00	     7		 push	0
+ 000003C2  E8 00000000 E     4		call	mprintf_
+ 000003C7  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 000003CA  58		     3		 pop	eax
+ 000003CB  66| 9D	     3		 popf
+ 000003CD  CC		     2		 int	3
+ 000003CE		     1	??0041:
+					endif
+
+					pushm	ebx,ecx,edx,ebp
+ 000003CE  53		     2		 push	ebx
+ 000003CF  51		     2		 push	ecx
+ 000003D0  52		     2		 push	edx
+ 000003D1  55		     2		 push	ebp
+
+ 000003D2  8B E8			mov	ebp,eax
+
+ 000003D4  8B 47 04			mov	eax,[edi].y
+ 000003D7  F7 6E 08			imul	[esi].z
+ 000003DA  8B D8			mov	ebx,eax
+ 000003DC  8B CA			mov	ecx,edx
+ 000003DE  8B 47 08			mov	eax,[edi].z
+ 000003E1  F7 6E 04			imul	[esi].y
+ 000003E4  2B C3			sub	eax,ebx
+ 000003E6  1B D1			sbb	edx,ecx
+ 000003E8  0F AC D0 10			shrd	eax,edx,16
+					ifndef	NDEBUG	;check for overflow
+ 000003EC  8B DA			 mov	ebx,edx	;save
+ 000003EE  99				 cdq		;get sign of result
+ 000003EF  C1 EB 10			 shr	ebx,16	;get high 16 of quad result
+ 000003F2  66| 3B D3			 cmp	dx,bx	;sign extension the same?
+					 break_if	ne,'overflow in crossprod'
+ 000003F5  75 02	     1		 jne	??004F
+ 000003F7  EB 2E	     1		 jmp	??004E
+ 000003F9
+ 000003F9  66| 9C	     3		 pushf		;save flags
+ 000003FB  50		     3		 push	eax	;mprintf trashes eax
+ 000003FC  EB 16	     4		jmp	??0051
+ 000003FE		     4	??0050	label	byte
+ 000003FE  6F 76 65 72 66    5		 %db	'&@SubStr('overflow in crossprod',??0053-??0055,??0054-??0053)'
+	   6C 6F 77 20 69
+	   6E 20 63 72 6F
+	   73 73 70 72 6F
+	   64
+ 00000413  00		     4		db	0
+ 00000414		     4	??0051:
+ 00000414  68 000003FE R     7		 push	offset ??0050
+ 00000419  6A 00	     7		 push	0
+ 0000041B  E8 00000000 E     4		call	mprintf_
+ 00000420  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 00000423  58		     3		 pop	eax
+ 00000424  66| 9D	     3		 popf
+ 00000426  CC		     2		 int	3
+ 00000427		     1	??004E:
+					endif
+ 00000427  89 45 00			mov	[ebp].x,eax
+
+ 0000042A  8B 47 08			mov	eax,[edi].z
+ 0000042D  F7 2E			imul	[esi].x
+ 0000042F  8B D8			mov	ebx,eax
+ 00000431  8B CA			mov	ecx,edx
+ 00000433  8B 07			mov	eax,[edi].x
+ 00000435  F7 6E 08			imul	[esi].z
+ 00000438  2B C3			sub	eax,ebx
+ 0000043A  1B D1			sbb	edx,ecx
+ 0000043C  0F AC D0 10			shrd	eax,edx,16
+					ifndef	NDEBUG	;check for overflow
+ 00000440  8B DA			 mov	ebx,edx	;save
+ 00000442  99				 cdq		;get sign of result
+ 00000443  C1 EB 10			 shr	ebx,16	;get high 16 of quad result
+ 00000446  66| 3B D3			 cmp	dx,bx	;sign extension the same?
+					 break_if	ne,'overflow in crossprod'
+ 00000449  75 02	     1		 jne	??005B
+ 0000044B  EB 2E	     1		 jmp	??005A
+ 0000044D
+ 0000044D  66| 9C	     3		 pushf		;save flags
+ 0000044F  50		     3		 push	eax	;mprintf trashes eax
+ 00000450  EB 16	     4		jmp	??005D
+ 00000452		     4	??005C	label	byte
+ 00000452  6F 76 65 72 66    5		 %db	'&@SubStr('overflow in crossprod',??005F-??0061,??0060-??005F)'
+	   6C 6F 77 20 69
+	   6E 20 63 72 6F
+	   73 73 70 72 6F
+	   64
+ 00000467  00		     4		db	0
+ 00000468		     4	??005D:
+ 00000468  68 00000452 R     7		 push	offset ??005C
+ 0000046D  6A 00	     7		 push	0
+ 0000046F  E8 00000000 E     4		call	mprintf_
+ 00000474  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 00000477  58		     3		 pop	eax
+ 00000478  66| 9D	     3		 popf
+ 0000047A  CC		     2		 int	3
+ 0000047B		     1	??005A:
+					endif
+ 0000047B  89 45 04			mov	[ebp].y,eax
+
+ 0000047E  8B 07			mov	eax,[edi].x
+ 00000480  F7 6E 04			imul	[esi].y
+ 00000483  8B D8			mov	ebx,eax
+ 00000485  8B CA			mov	ecx,edx
+ 00000487  8B 47 04			mov	eax,[edi].y
+ 0000048A  F7 2E			imul	[esi].x
+ 0000048C  2B C3			sub	eax,ebx
+ 0000048E  1B D1			sbb	edx,ecx
+ 00000490  0F AC D0 10			shrd	eax,edx,16
+					ifndef	NDEBUG	;check for overflow
+ 00000494  8B DA			 mov	ebx,edx	;save
+ 00000496  99				 cdq		;get sign of result
+ 00000497  C1 EB 10			 shr	ebx,16	;get high 16 of quad result
+ 0000049A  66| 3B D3			 cmp	dx,bx	;sign extension the same?
+					 break_if	ne,'overflow in crossprod'
+ 0000049D  75 02	     1		 jne	??0067
+ 0000049F  EB 2E	     1		 jmp	??0066
+ 000004A1
+ 000004A1  66| 9C	     3		 pushf		;save flags
+ 000004A3  50		     3		 push	eax	;mprintf trashes eax
+ 000004A4  EB 16	     4		jmp	??0069
+ 000004A6		     4	??0068	label	byte
+ 000004A6  6F 76 65 72 66    5		 %db	'&@SubStr('overflow in crossprod',??006B-??006D,??006C-??006B)'
+	   6C 6F 77 20 69
+	   6E 20 63 72 6F
+	   73 73 70 72 6F
+	   64
+ 000004BB  00		     4		db	0
+ 000004BC		     4	??0069:
+ 000004BC  68 000004A6 R     7		 push	offset ??0068
+ 000004C1  6A 00	     7		 push	0
+ 000004C3  E8 00000000 E     4		call	mprintf_
+ 000004C8  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 000004CB  58		     3		 pop	eax
+ 000004CC  66| 9D	     3		 popf
+ 000004CE  CC		     2		 int	3
+ 000004CF		     1	??0066:
+					endif
+ 000004CF  89 45 08			mov	[ebp].z,eax
+
+ 000004D2  8B C5			mov	eax,ebp	;return dest in eax
+
+					popm	ebx,ecx,edx,ebp
+ 000004D4  5D		     2		 pop	ebp
+ 000004D5  5A		     2		 pop	edx
+ 000004D6  59		     2		 pop	ecx
+ 000004D7  5B		     2		 pop	ebx
+
+ 000004D8  C3				ret
+
+				abs_eax	macro
+					cdq
+					xor	eax,edx
+					sub	eax,edx
+					endm
+
+				;computes surface normal from three points. takes ebx=dest, eax,esi,edi=vecs
+				;returns eax=dest. Result vector is normalized.
+ 000004D9			vm_vec_normal:
+ 000004D9  E8 0000008E			call	vm_vec_perp	;get unnormalized
+ 000004DE  51				push	ecx
+ 000004DF  96				xchg	esi,eax	;get in esi, save esi
+ 000004E0  E8 FFFFFD9A			call	vm_vec_normalize
+ 000004E5  96				xchg	eax,esi
+ 000004E6  59				pop	ecx
+ 000004E7  C3				ret
+
+
+				;make sure a vector is reasonably sized to go into a cross product
+				;trashes eax,ebx,cl,edx
+ 000004E8  8B 06		check_vec:	mov	eax,[esi].x
+					abs_eax
+ 000004EA  99		     1		cdq
+ 000004EB  33 C2	     1		xor	eax,edx
+ 000004ED  2B C2	     1		sub	eax,edx
+ 000004EF  8B D8			mov	ebx,eax
+ 000004F1  8B 46 04			mov	eax,[esi].y
+					abs_eax
+ 000004F4  99		     1		cdq
+ 000004F5  33 C2	     1		xor	eax,edx
+ 000004F7  2B C2	     1		sub	eax,edx
+ 000004F9  0B D8			or	ebx,eax
+ 000004FB  8B 46 08			mov	eax,[esi].z
+					abs_eax
+ 000004FE  99		     1		cdq
+ 000004FF  33 C2	     1		xor	eax,edx
+ 00000501  2B C2	     1		sub	eax,edx
+ 00000503  0B D8			or	ebx,eax
+ 00000505  74 64			jz	null_vector
+
+ 00000507  32 C9			xor	cl,cl	;init shift count
+
+ 00000509  F7 C3 FFFC0000		test	ebx,0fffc0000h	;too big
+ 0000050F  74 29			jz	not_too_big
+ 00000511  F7 C3 00F00000	check_4_down:	test	ebx,000f00000h
+ 00000517  74 08			jz	check_2_down
+ 00000519  80 C1 04			add	cl,4
+ 0000051C  C1 FB 04			sar	ebx,4
+ 0000051F  EB F0			jmp	check_4_down
+ 00000521  F7 C3 FFFC0000	check_2_down:	test	ebx,0fffc0000h
+ 00000527  74 08			jz	not_2_down
+ 00000529  80 C1 02			add	cl,2
+ 0000052C  C1 FB 02			sar	ebx,2
+ 0000052F  EB F0			jmp	check_2_down
+ 00000531			not_2_down:
+ 00000531  D3 3E			sar	[esi].x,cl
+ 00000533  D3 7E 04			sar	[esi].y,cl
+ 00000536  D3 7E 08			sar	[esi].z,cl
+ 00000539  C3				ret
+
+				;maybe too small...
+ 0000053A  F7 C3 FFFF8000	not_too_big:	test	ebx,0ffff8000h
+ 00000540  75 28			jnz	not_too_small
+ 00000542  F7 C3 FFFFF000	check_4_up:	test	ebx,0fffff000h
+ 00000548  75 08			jnz	check_2_up
+ 0000054A  80 C1 04			add	cl,4
+ 0000054D  C1 E3 04			sal	ebx,4
+ 00000550  EB F0			jmp	check_4_up
+ 00000552  F7 C3 FFFF8000	check_2_up:	test	ebx,0ffff8000h
+ 00000558  75 08			jnz	not_2_up
+ 0000055A  80 C1 02			add	cl,2
+ 0000055D  C1 E3 02			sal	ebx,2
+ 00000560  EB F0			jmp	check_2_up
+ 00000562			not_2_up:
+ 00000562  D3 26			sal	[esi].x,cl
+ 00000564  D3 66 04			sal	[esi].y,cl
+ 00000567  D3 66 08			sal	[esi].z,cl
+
+ 0000056A  C3			not_too_small:	ret
+
+ 0000056B			null_vector:
+				; debug_brk commented out by mk on 05/04/94
+				;**	debug_brk	"null vector in check_vec"
+ 0000056B  C3				ret
+
+
+				;computes surface normal from three points. takes ebx=dest, eax,esi,edi=vecs
+				;returns eax=dest. Result vector is NOT normalized, but this routine does
+				;make an effort that cross product does not overflow or underflow  
+ 0000056C			vm_vec_perp:	pushm	esi,edi	;save for return
+ 0000056C  56		     2		 push	esi
+ 0000056D  57		     2		 push	edi
+
+ 0000056E  50				push	eax	;save src0
+					
+ 0000056F  87 F7			xchg	esi,edi
+ 00000571  8D 05 00000040 R		lea	eax,tempv1
+ 00000577  E8 FFFFFA9F			call	vm_vec_sub	;src2 - src1
+
+ 0000057C  8B F7			mov	esi,edi	;get src1 in esi
+ 0000057E  5F				pop	edi	;get src0 in edi
+ 0000057F  8D 05 00000034 R		lea	eax,tempv0
+ 00000585  E8 FFFFFA91			call	vm_vec_sub	;src1 - src0
+
+ 0000058A  8B F0			mov	esi,eax	;tempv0 in esi
+ 0000058C  8D 3D 00000040 R		lea	edi,tempv1	;tempv1 in edi
+
+					pushm	ebx,ecx,edx
+ 00000592  53		     2		 push	ebx
+ 00000593  51		     2		 push	ecx
+ 00000594  52		     2		 push	edx
+ 00000595  E8 FFFFFF4E			call	check_vec	;make sure reasonable value
+ 0000059A  87 F7			xchg	esi,edi
+ 0000059C  E8 FFFFFF47			call	check_vec	;make sure reasonable value
+ 000005A1  87 F7			xchg	esi,edi
+					popm	ebx,ecx,edx
+ 000005A3  5A		     2		 pop	edx
+ 000005A4  59		     2		 pop	ecx
+ 000005A5  5B		     2		 pop	ebx
+
+ 000005A6  8B C3			mov	eax,ebx	;get dest in eax
+ 000005A8  E8 FFFFFDB9			call	vm_vec_crossprod
+
+					popm	esi,edi	;restore regs
+ 000005AD  5F		     2		 pop	edi
+ 000005AE  5E		     2		 pop	esi
+ 000005AF  C3				ret
+
+
+				;compute a rotation matrix from three angles. takes edi=dest matrix, 
+				;esi=angles vector.  returns edi=dest matrix. 
+ 000005B0			vm_angles_2_matrix:
+					pushm	eax,edx,ebx,ecx,esi
+ 000005B0  50		     2		 push	eax
+ 000005B1  52		     2		 push	edx
+ 000005B2  53		     2		 push	ebx
+ 000005B3  51		     2		 push	ecx
+ 000005B4  56		     2		 push	esi
+
+				;get sines & cosines
+ 000005B5  66| 8B 06			mov	ax,[esi].pitch
+ 000005B8  E8 00000000 E		call	fix_sincos
+ 000005BD  A3 00000076 R		mov	sinp,eax
+ 000005C2  89 1D 0000007A R		mov	cosp,ebx
+
+ 000005C8  66| 8B 46 02			mov	ax,[esi].bank
+ 000005CC  E8 00000000 E		call	fix_sincos
+ 000005D1  A3 0000007E R		mov	sinb,eax
+ 000005D6  89 1D 00000082 R		mov	cosb,ebx
+
+ 000005DC  66| 8B 46 04			mov	ax,[esi].head
+ 000005E0  E8 00000000 E		call	fix_sincos
+ 000005E5  A3 00000086 R		mov	sinh,eax
+ 000005EA  89 1D 0000008A R		mov	cosh,ebx
+
+				;alternate entry point with sines & cosines already computed.  
+				;Note all the registers already pushed.
+ 000005F0			sincos_2_matrix:
+
+				;now calculate the 9 elements
+
+ 000005F0  A1 0000007E R		mov	eax,sinb
+					fixmul	sinh
+ 000005F5  F7 2D 00000086 R  1		imul	sinh
+ 000005FB  0F AC D0 10	     1		shrd	eax,edx,16
+ 000005FF  8B C8			mov	ecx,eax	;save sbsh
+					fixmul	sinp
+ 00000601  F7 2D 00000076 R  1		imul	sinp
+ 00000607  0F AC D0 10	     1		shrd	eax,edx,16
+ 0000060B  8B D8			mov	ebx,eax
+ 0000060D  A1 00000082 R		mov	eax,cosb
+					fixmul	cosh
+ 00000612  F7 2D 0000008A R  1		imul	cosh
+ 00000618  0F AC D0 10	     1		shrd	eax,edx,16
+ 0000061C  8B F0			mov	esi,eax	;save cbch
+ 0000061E  03 C3			add	eax,ebx
+ 00000620  89 07			mov	[edi].m1,eax	;m1=cbch+sbspsh
+
+ 00000622  8B C6			mov	eax,esi	;get cbch
+					fixmul	sinp
+ 00000624  F7 2D 00000076 R  1		imul	sinp
+ 0000062A  0F AC D0 10	     1		shrd	eax,edx,16
+ 0000062E  03 C1			add	eax,ecx	;add sbsh
+ 00000630  89 47 14			mov	[edi].m8,eax	;m8=sbsh+cbchsp
+
+
+ 00000633  A1 00000082 R		mov	eax,cosb
+					fixmul	sinh
+ 00000638  F7 2D 00000086 R  1		imul	sinh
+ 0000063E  0F AC D0 10	     1		shrd	eax,edx,16
+ 00000642  8B C8			mov	ecx,eax	;save cbsh
+					fixmul	sinp
+ 00000644  F7 2D 00000076 R  1		imul	sinp
+ 0000064A  0F AC D0 10	     1		shrd	eax,edx,16
+ 0000064E  8B D8			mov	ebx,eax
+ 00000650  A1 0000007E R		mov	eax,sinb
+					fixmul	cosh
+ 00000655  F7 2D 0000008A R  1		imul	cosh
+ 0000065B  0F AC D0 10	     1		shrd	eax,edx,16
+ 0000065F  8B F0			mov	esi,eax	;save sbch
+ 00000661  2B D8			sub	ebx,eax
+ 00000663  89 5F 0C			mov	[edi].m2,ebx	;m2=cbshsp-sbch
+
+ 00000666  8B C6			mov	eax,esi	;get sbch
+					fixmul	sinp
+ 00000668  F7 2D 00000076 R  1		imul	sinp
+ 0000066E  0F AC D0 10	     1		shrd	eax,edx,16
+ 00000672  2B C1			sub	eax,ecx	;sub from cbsh
+ 00000674  89 47 08			mov	[edi].m7,eax	;m7=sbchsp-cbsh
+
+
+ 00000677  A1 00000086 R		mov	eax,sinh
+					fixmul	cosp
+ 0000067C  F7 2D 0000007A R  1		imul	cosp
+ 00000682  0F AC D0 10	     1		shrd	eax,edx,16
+ 00000686  89 47 18			mov	[edi].m3,eax	;m3=shcp
+
+ 00000689  A1 0000007E R		mov	eax,sinb
+					fixmul	cosp
+ 0000068E  F7 2D 0000007A R  1		imul	cosp
+ 00000694  0F AC D0 10	     1		shrd	eax,edx,16
+ 00000698  89 47 04			mov	[edi].m4,eax	;m4=sbcp
+
+ 0000069B  A1 00000082 R		mov	eax,cosb
+					fixmul	cosp
+ 000006A0  F7 2D 0000007A R  1		imul	cosp
+ 000006A6  0F AC D0 10	     1		shrd	eax,edx,16
+ 000006AA  89 47 10			mov	[edi].m5,eax	;m5=cbcp
+
+ 000006AD  A1 00000076 R		mov	eax,sinp
+ 000006B2  F7 D8			neg	eax
+ 000006B4  89 47 1C			mov	[edi].m6,eax	;m6=-sp
+
+ 000006B7  A1 0000008A R		mov	eax,cosh
+					fixmul	cosp
+ 000006BC  F7 2D 0000007A R  1		imul	cosp
+ 000006C2  0F AC D0 10	     1		shrd	eax,edx,16
+ 000006C6  89 47 20			mov	[edi].m9,eax	;m9=chcp
+
+					popm	eax,edx,ebx,ecx,esi
+ 000006C9  5E		     2		 pop	esi
+ 000006CA  59		     2		 pop	ecx
+ 000006CB  5B		     2		 pop	ebx
+ 000006CC  5A		     2		 pop	edx
+ 000006CD  58		     2		 pop	eax
+ 000006CE  C3				ret
+
+				m2m	macro	dest,src
+					mov	eax,src
+					mov	dest,eax
+					endm
+
+				m2m_neg	macro	dest,src
+					mov	eax,src
+					neg	eax
+					mov	dest,eax
+					endm
+
+				;create a rotation matrix from one or two vectors. 
+				;requires forward vec, and assumes zero bank if up & right vecs==NULL
+				;up/right vector need not be exactly perpendicular to forward vec
+				;takes edi=matrix, esi=forward vec, eax=up vec, ebx=right vec. 
+				;returns edi=matrix.  trashes eax,ebx,esi
+				;Note: this routine loses precision as the forward vector approaches 
+				;straigt up or down (I think)
+ 000006CF			vm_vector_2_matrix:
+					pushm	ecx
+ 000006CF  51		     2		 push	ecx
+
+					ifndef	NDEBUG
+ 000006D0  0B F6			 or	esi,esi
+					 break_if	z,"vm_vector_2_matrix: forward vec cannot be NULL!"
+ 000006D2  74 02	     1		 jz	??0083
+ 000006D4  EB 48	     1		 jmp	??0082
+ 000006D6
+ 000006D6  66| 9C	     3		 pushf		;save flags
+ 000006D8  50		     3		 push	eax	;mprintf trashes eax
+ 000006D9  EB 30	     4		jmp	??0085
+ 000006DB		     4	??0084	label	byte
+ 000006DB  76 6D 5F 76 65    5		 %db	'&@SubStr("vm_vector_2_matrix: forward vec cannot be NULL!",??0087-??0089,??0088-??0087)'
+	   63 74 6F 72 5F
+	   32 5F 6D 61 74
+	   72 69 78 3A 20
+	   66 6F 72 77 61
+	   72 64 20 76 65
+	   63 20 63 61 6E
+	   6E 6F 74 20 62
+	   65 20 4E 55 4C
+	   4C 21
+ 0000070A  00		     4		db	0
+ 0000070B		     4	??0085:
+ 0000070B  68 000006DB R     7		 push	offset ??0084
+ 00000710  6A 00	     7		 push	0
+ 00000712  E8 00000000 E     4		call	mprintf_
+ 00000717  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 0000071A  58		     3		 pop	eax
+ 0000071B  66| 9D	     3		 popf
+ 0000071D  CC		     2		 int	3
+ 0000071E		     1	??0082:
+					endif
+
+ 0000071E  0B C0			or	eax,eax	;up vector present?
+ 00000720  0F 85 0000008A		jnz	use_up_vec	;..yep
+
+ 00000726  0B DB			or	ebx,ebx	;right vector present?
+ 00000728  0F 84 00000165		jz	just_forward_vec	;..nope
+				;use_right_vec
+ 0000072E  57				push	edi	;save matrix
+ 0000072F  8B FB			mov	edi,ebx	;save right vec
+
+					vm_copy	zvec,[esi]
+ 00000731  8B 06	     2		 mov	eax,[[esi]].x
+ 00000733  A3 00000064 R     2		 mov	[zvec].x,eax
+ 00000738  8B 46 04	     2		 mov	eax,[[esi]].y
+ 0000073B  A3 00000068 R     2		 mov	[zvec].y,eax
+ 00000740  8B 46 08	     2		 mov	eax,[[esi]].z
+ 00000743  A3 0000006C R     2		 mov	[zvec].z,eax
+ 00000748  8D 35 00000064 R		lea	esi,zvec
+ 0000074E  E8 FFFFFB2C			call	vm_vec_normalize
+ 00000753  0B C9			or	ecx,ecx
+ 00000755  E3 4D			jecxz	bad_vector2
+
+ 00000757  8D 35 0000004C R		lea	esi,xvec
+					vm_copy	[esi],[edi]
+ 0000075D  8B 07	     2		 mov	eax,[[edi]].x
+ 0000075F  89 06	     2		 mov	[[esi]].x,eax
+ 00000761  8B 47 04	     2		 mov	eax,[[edi]].y
+ 00000764  89 46 04	     2		 mov	[[esi]].y,eax
+ 00000767  8B 47 08	     2		 mov	eax,[[edi]].z
+ 0000076A  89 46 08	     2		 mov	[[esi]].z,eax
+ 0000076D  E8 FFFFFB0D			call	vm_vec_normalize
+ 00000772  E3 30			jecxz	bad_vector2
+
+ 00000774  8D 05 00000058 R		lea	eax,yvec	;dest = y
+ 0000077A  8B FE			mov	edi,esi	;src1 = x
+ 0000077C  8D 35 00000064 R		lea	esi,zvec	;scr0 = z
+ 00000782  E8 FFFFFBDF			call	vm_vec_crossprod	;get y = z cross x
+
+				;normalize new perpendicular vector
+ 00000787  8B F0			mov	esi,eax	;get new vec (up) in esi
+ 00000789  E8 FFFFFAF1			call	vm_vec_normalize
+ 0000078E  E3 14			jecxz	bad_vector2
+
+				;now recompute right vector, in case it wasn't entirely perpendiclar
+
+ 00000790  8D 05 0000004C R		lea	eax,xvec	;dest = x
+ 00000796  8D 3D 00000064 R		lea	edi,zvec
+ 0000079C  E8 FFFFFBC5			call	vm_vec_crossprod	;x = y cross z
+
+ 000007A1  5F				pop	edi	;get matrix back
+
+ 000007A2  EB 71			jmp	copy_into_matrix
+
+
+				;one of the non-forward vectors caused a problem, so ignore them and
+				;use just the forward vector
+ 000007A4  5F			bad_vector2:	pop	edi
+ 000007A5  8D 35 00000064 R		lea	esi,zvec
+ 000007AB  E9 000000E3			jmp	just_forward_vec
+
+				;use forward and up vectors
+ 000007B0  57			use_up_vec:	push	edi	;save matrix
+ 000007B1  8B F8			mov	edi,eax	;save up vec
+
+					vm_copy	zvec,[esi]
+ 000007B3  8B 06	     2		 mov	eax,[[esi]].x
+ 000007B5  A3 00000064 R     2		 mov	[zvec].x,eax
+ 000007BA  8B 46 04	     2		 mov	eax,[[esi]].y
+ 000007BD  A3 00000068 R     2		 mov	[zvec].y,eax
+ 000007C2  8B 46 08	     2		 mov	eax,[[esi]].z
+ 000007C5  A3 0000006C R     2		 mov	[zvec].z,eax
+ 000007CA  8D 35 00000064 R		lea	esi,zvec
+ 000007D0  E8 FFFFFAAA			call	vm_vec_normalize
+ 000007D5  E3 CD			jecxz	bad_vector2
+
+ 000007D7  8D 35 00000058 R		lea	esi,yvec
+					vm_copy	[esi],[edi]
+ 000007DD  8B 07	     2		 mov	eax,[[edi]].x
+ 000007DF  89 06	     2		 mov	[[esi]].x,eax
+ 000007E1  8B 47 04	     2		 mov	eax,[[edi]].y
+ 000007E4  89 46 04	     2		 mov	[[esi]].y,eax
+ 000007E7  8B 47 08	     2		 mov	eax,[[edi]].z
+ 000007EA  89 46 08	     2		 mov	[[esi]].z,eax
+ 000007ED  E8 FFFFFA8D			call	vm_vec_normalize
+ 000007F2  E3 B0			jecxz	bad_vector2
+
+ 000007F4  8D 05 0000004C R		lea	eax,xvec	;dest = x
+ 000007FA  8D 3D 00000064 R		lea	edi,zvec	;scr0 = y, scr1 = z
+ 00000800  E8 FFFFFB61			call	vm_vec_crossprod	;get x vector
+
+				;normalize new perpendicular vector
+ 00000805  96				xchg	esi,eax	;get new vec in esi
+ 00000806  E8 FFFFFA74			call	vm_vec_normalize
+ 0000080B  E3 97			jecxz	bad_vector2	;bad_vector3
+
+				;now recompute up vector, in case it wasn't entirely perpendiclar
+
+ 0000080D  87 F7			xchg	esi,edi	;dest = y, src0 = z, src1 = x
+ 0000080F  E8 FFFFFB52			call	vm_vec_crossprod	;get x vector
+
+ 00000814  5F				pop	edi	;get matrix back
+
+ 00000815			copy_into_matrix:	vm_copy	[edi].rvec,xvec
+ 00000815  A1 0000004C R     2		 mov	eax,[xvec].x
+ 0000081A  89 07	     2		 mov	[[edi].rvec].x,eax
+ 0000081C  A1 00000050 R     2		 mov	eax,[xvec].y
+ 00000821  89 47 04	     2		 mov	[[edi].rvec].y,eax
+ 00000824  A1 00000054 R     2		 mov	eax,[xvec].z
+ 00000829  89 47 08	     2		 mov	[[edi].rvec].z,eax
+					vm_copy	[edi].uvec,yvec
+ 0000082C  A1 00000058 R     2		 mov	eax,[yvec].x
+ 00000831  89 47 0C	     2		 mov	[[edi].uvec].x,eax
+ 00000834  A1 0000005C R     2		 mov	eax,[yvec].y
+ 00000839  89 47 10	     2		 mov	[[edi].uvec].y,eax
+ 0000083C  A1 00000060 R     2		 mov	eax,[yvec].z
+ 00000841  89 47 14	     2		 mov	[[edi].uvec].z,eax
+					vm_copy	[edi].fvec,zvec
+ 00000844  A1 00000064 R     2		 mov	eax,[zvec].x
+ 00000849  89 47 18	     2		 mov	[[edi].fvec].x,eax
+ 0000084C  A1 00000068 R     2		 mov	eax,[zvec].y
+ 00000851  89 47 1C	     2		 mov	[[edi].fvec].y,eax
+ 00000854  A1 0000006C R     2		 mov	eax,[zvec].z
+ 00000859  89 47 20	     2		 mov	[[edi].fvec].z,eax
+
+ 0000085C  E9 000000F9			jmp	done_v2m
+
+ 00000861  5F			bad_vector3:	pop	edi
+ 00000862  59			bad_vector:	pop	ecx
+					debug_brk	'0-len vec in vec_2_mat'
+ 00000863  66| 9C	     2		 pushf		;save flags
+ 00000865  50		     2		 push	eax	;mprintf trashes eax
+ 00000866  EB 17	     3		jmp	??008F
+ 00000868		     3	??008E	label	byte
+ 00000868  30 2D 6C 65 6E    4		 %db	'&@SubStr('0-len vec in vec_2_mat',??0091-??0093,??0092-??0091)'
+	   20 76 65 63 20
+	   69 6E 20 76 65
+	   63 5F 32 5F 6D
+	   61 74
+ 0000087E  00		     3		db	0
+ 0000087F		     3	??008F:
+ 0000087F  68 00000868 R     6		 push	offset ??008E
+ 00000884  6A 00	     6		 push	0
+ 00000886  E8 00000000 E     3		call	mprintf_
+ 0000088B  83 C4 08	     3		add	esp,(@ArgCount()+2)*4	;fix stack
+ 0000088E  58		     2		 pop	eax
+ 0000088F  66| 9D	     2		 popf
+ 00000891  CC		     1		 int	3
+ 00000892  C3				ret
+
+				;only the forward vector is present
+ 00000893			just_forward_vec:	vm_copy	zvec,[esi]
+ 00000893  8B 06	     2		 mov	eax,[[esi]].x
+ 00000895  A3 00000064 R     2		 mov	[zvec].x,eax
+ 0000089A  8B 46 04	     2		 mov	eax,[[esi]].y
+ 0000089D  A3 00000068 R     2		 mov	[zvec].y,eax
+ 000008A2  8B 46 08	     2		 mov	eax,[[esi]].z
+ 000008A5  A3 0000006C R     2		 mov	[zvec].z,eax
+ 000008AA  8D 35 00000064 R		lea	esi,zvec
+ 000008B0  E8 FFFFF9CA			call	vm_vec_normalize
+ 000008B5  E3 AB			jecxz	bad_vector
+
+					vm_copy	[edi].fvec,[esi]
+ 000008B7  8B 06	     2		 mov	eax,[[esi]].x
+ 000008B9  89 47 18	     2		 mov	[[edi].fvec].x,eax
+ 000008BC  8B 46 04	     2		 mov	eax,[[esi]].y
+ 000008BF  89 47 1C	     2		 mov	[[edi].fvec].y,eax
+ 000008C2  8B 46 08	     2		 mov	eax,[[esi]].z
+ 000008C5  89 47 20	     2		 mov	[[edi].fvec].z,eax
+
+ 000008C8  8B 06			mov	eax,[esi].x
+ 000008CA  0B 46 08			or	eax,[esi].z	;check both x & z == 0
+ 000008CD  75 28			jnz	not_up
+
+				;forward vector is straight up (or down)
+
+ 000008CF  C7 07 00010000		mov	[edi].m1,f1_0
+ 000008D5  52				push	edx
+ 000008D6  8B 46 04			mov	eax,[esi].y	;get y componant
+ 000008D9  99				cdq		;get y sign
+ 000008DA  B8 FFFF0000			mov	eax,-f1_0
+ 000008DF  33 C2			xor	eax,edx
+ 000008E1  2B C2			sub	eax,edx	;make sign correct
+ 000008E3  89 47 14			mov	[edi].m8,eax
+ 000008E6  5A				pop	edx
+ 000008E7  33 C0			xor	eax,eax
+ 000008E9  89 47 04			mov	[edi].m4,eax
+ 000008EC  89 47 08			mov	[edi].m7,eax
+ 000008EF  89 47 0C			mov	[edi].m2,eax
+ 000008F2  89 47 10			mov	[edi].m5,eax
+ 000008F5  EB 63			jmp	done_v2m
+
+ 000008F7			not_up:
+					m2m	xvec.x,[esi].z
+ 000008F7  8B 46 08	     1		mov	eax,[esi].z
+ 000008FA  A3 0000004C R     1		mov	xvec.x,eax
+ 000008FF  C7 05 00000050 R		mov	xvec.y,0
+	   00000000
+					m2m_neg	xvec.z,[esi].x
+ 00000909  8B 06	     1		mov	eax,[esi].x
+ 0000090B  F7 D8	     1		neg	eax
+ 0000090D  A3 00000054 R     1		mov	xvec.z,eax
+ 00000912  8D 35 0000004C R		lea	esi,xvec
+ 00000918  E8 FFFFF962			call	vm_vec_normalize
+
+					vm_copy	[edi].rvec,[esi]
+ 0000091D  8B 06	     2		 mov	eax,[[esi]].x
+ 0000091F  89 07	     2		 mov	[[edi].rvec].x,eax
+ 00000921  8B 46 04	     2		 mov	eax,[[esi]].y
+ 00000924  89 47 04	     2		 mov	[[edi].rvec].y,eax
+ 00000927  8B 46 08	     2		 mov	eax,[[esi]].z
+ 0000092A  89 47 08	     2		 mov	[[edi].rvec].z,eax
+
+ 0000092D  57				push	edi	;save matrix
+ 0000092E  8B FE			mov	edi,esi	;scr1 = x
+ 00000930  8D 35 00000064 R		lea	esi,zvec	;src0 = z
+ 00000936  8D 05 00000058 R		lea	eax,yvec	;dest = y
+ 0000093C  E8 FFFFFA25			call	vm_vec_crossprod
+ 00000941  5F				pop	edi
+
+					vm_copy	[edi].uvec,[yvec]
+ 00000942  A1 00000058 R     2		 mov	eax,[[yvec]].x
+ 00000947  89 47 0C	     2		 mov	[[edi].uvec].x,eax
+ 0000094A  A1 0000005C R     2		 mov	eax,[[yvec]].y
+ 0000094F  89 47 10	     2		 mov	[[edi].uvec].y,eax
+ 00000952  A1 00000060 R     2		 mov	eax,[[yvec]].z
+ 00000957  89 47 14	     2		 mov	[[edi].uvec].z,eax
+
+ 0000095A  59			done_v2m:	pop	ecx
+ 0000095B  C3				ret
+
+					if	V2MN_ENABLED
+					endif	;V2MN_ENABLED
+
+
+				;multiply (dot) two vectors. assumes dest ptr in ebp, src pointers in esi,edi.
+				;trashes ebx,ecx,edx
+				vv_mul	macro	dest,x0,y0,z0,x1,y1,z1
+
+					mov	eax,[esi].x0
+					imul	[edi].x1
+					mov	ebx,eax
+					mov	ecx,edx
+
+					mov	eax,[esi].y0
+					imul	[edi].y1
+					add	ebx,eax
+					adc	ecx,edx
+
+					mov	eax,[esi].z0
+					imul	[edi].z1
+					add	ebx,eax
+					adc	ecx,edx
+
+					shrd	ebx,ecx,16	;fixup ebx
+					mov	[ebp].dest,ebx
+
+					endm
+
+				;rotate a vector by a rotation matrix
+				;eax=dest vector, esi=src vector, edi=matrix. returns eax=dest vector
+ 0000095C			vm_vec_rotate:
+					ifndef	NDEBUG
+ 0000095C  3B C6			 cmp	eax,esi
+					 break_if	e,'vec_rotate: dest==src'
+ 0000095E  74 02	     1		 je	??0099
+ 00000960  EB 2E	     1		 jmp	??0098
+ 00000962
+ 00000962  66| 9C	     3		 pushf		;save flags
+ 00000964  50		     3		 push	eax	;mprintf trashes eax
+ 00000965  EB 16	     4		jmp	??009B
+ 00000967		     4	??009A	label	byte
+ 00000967  76 65 63 5F 72    5		 %db	'&@SubStr('vec_rotate: dest==src',??009D-??009F,??009E-??009D)'
+	   6F 74 61 74 65
+	   3A 20 64 65 73
+	   74 3D 3D 73 72
+	   63
+ 0000097C  00		     4		db	0
+ 0000097D		     4	??009B:
+ 0000097D  68 00000967 R     7		 push	offset ??009A
+ 00000982  6A 00	     7		 push	0
+ 00000984  E8 00000000 E     4		call	mprintf_
+ 00000989  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 0000098C  58		     3		 pop	eax
+ 0000098D  66| 9D	     3		 popf
+ 0000098F  CC		     2		 int	3
+ 00000990		     1	??0098:
+					endif
+
+					pushm	ebx,ecx,edx,ebp
+ 00000990  53		     2		 push	ebx
+ 00000991  51		     2		 push	ecx
+ 00000992  52		     2		 push	edx
+ 00000993  55		     2		 push	ebp
+
+ 00000994  8B E8			mov	ebp,eax	;dest in ebp
+
+				;compute x
+					vv_mul	x, x,y,z, m1,m4,m7
+ 00000996  8B 06	     1		mov	eax,[esi].x
+ 00000998  F7 2F	     1		imul	[edi].m1
+ 0000099A  8B D8	     1		mov	ebx,eax
+ 0000099C  8B CA	     1		mov	ecx,edx
+ 0000099E  8B 46 04	     1		mov	eax,[esi].y
+ 000009A1  F7 6F 04	     1		imul	[edi].m4
+ 000009A4  03 D8	     1		add	ebx,eax
+ 000009A6  13 CA	     1		adc	ecx,edx
+ 000009A8  8B 46 08	     1		mov	eax,[esi].z
+ 000009AB  F7 6F 08	     1		imul	[edi].m7
+ 000009AE  03 D8	     1		add	ebx,eax
+ 000009B0  13 CA	     1		adc	ecx,edx
+ 000009B2  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 000009B6  89 5D 00	     1		mov	[ebp].x,ebx
+					vv_mul	y, x,y,z, m2,m5,m8
+ 000009B9  8B 06	     1		mov	eax,[esi].x
+ 000009BB  F7 6F 0C	     1		imul	[edi].m2
+ 000009BE  8B D8	     1		mov	ebx,eax
+ 000009C0  8B CA	     1		mov	ecx,edx
+ 000009C2  8B 46 04	     1		mov	eax,[esi].y
+ 000009C5  F7 6F 10	     1		imul	[edi].m5
+ 000009C8  03 D8	     1		add	ebx,eax
+ 000009CA  13 CA	     1		adc	ecx,edx
+ 000009CC  8B 46 08	     1		mov	eax,[esi].z
+ 000009CF  F7 6F 14	     1		imul	[edi].m8
+ 000009D2  03 D8	     1		add	ebx,eax
+ 000009D4  13 CA	     1		adc	ecx,edx
+ 000009D6  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 000009DA  89 5D 04	     1		mov	[ebp].y,ebx
+					vv_mul	z, x,y,z, m3,m6,m9
+ 000009DD  8B 06	     1		mov	eax,[esi].x
+ 000009DF  F7 6F 18	     1		imul	[edi].m3
+ 000009E2  8B D8	     1		mov	ebx,eax
+ 000009E4  8B CA	     1		mov	ecx,edx
+ 000009E6  8B 46 04	     1		mov	eax,[esi].y
+ 000009E9  F7 6F 1C	     1		imul	[edi].m6
+ 000009EC  03 D8	     1		add	ebx,eax
+ 000009EE  13 CA	     1		adc	ecx,edx
+ 000009F0  8B 46 08	     1		mov	eax,[esi].z
+ 000009F3  F7 6F 20	     1		imul	[edi].m9
+ 000009F6  03 D8	     1		add	ebx,eax
+ 000009F8  13 CA	     1		adc	ecx,edx
+ 000009FA  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 000009FE  89 5D 08	     1		mov	[ebp].z,ebx
+
+ 00000A01  8B C5			mov	eax,ebp	;return eax=dest
+					popm	ebx,ecx,edx,ebp
+ 00000A03  5D		     2		 pop	ebp
+ 00000A04  5A		     2		 pop	edx
+ 00000A05  59		     2		 pop	ecx
+ 00000A06  5B		     2		 pop	ebx
+
+ 00000A07  C3				ret
+
+
+				;transpose a matrix in place.  Takes edi=matrix. returns edi=matrix
+ 00000A08			vm_transpose_matrix:
+ 00000A08  50				push	eax
+
+ 00000A09  8B 47 0C			mov	eax,[edi].m2
+ 00000A0C  87 47 04			xchg	eax,[edi].m4
+ 00000A0F  89 47 0C			mov	[edi].m2,eax
+
+ 00000A12  8B 47 18			mov	eax,[edi].m3
+ 00000A15  87 47 08			xchg	eax,[edi].m7
+ 00000A18  89 47 18			mov	[edi].m3,eax
+
+ 00000A1B  8B 47 1C			mov	eax,[edi].m6
+ 00000A1E  87 47 14			xchg	eax,[edi].m8
+ 00000A21  89 47 1C			mov	[edi].m6,eax
+
+ 00000A24  58				pop	eax
+
+ 00000A25  C3				ret
+
+
+
+				;copy and transpose a matrix.  Takes edi=dest, esi=src. returns edi=dest
+ 00000A26			vm_copy_transpose_matrix:
+ 00000A26  50				push	eax
+
+ 00000A27  8B 06			mov	eax,[esi].m1
+ 00000A29  89 07			mov	[edi].m1,eax
+
+ 00000A2B  8B 46 0C			mov	eax,[esi].m2
+ 00000A2E  89 47 04			mov	[edi].m4,eax
+
+ 00000A31  8B 46 18			mov	eax,[esi].m3
+ 00000A34  89 47 08			mov	[edi].m7,eax
+
+ 00000A37  8B 46 04			mov	eax,[esi].m4
+ 00000A3A  89 47 0C			mov	[edi].m2,eax
+
+ 00000A3D  8B 46 10			mov	eax,[esi].m5
+ 00000A40  89 47 10			mov	[edi].m5,eax
+
+ 00000A43  8B 46 1C			mov	eax,[esi].m6
+ 00000A46  89 47 14			mov	[edi].m8,eax
+
+ 00000A49  8B 46 08			mov	eax,[esi].m7
+ 00000A4C  89 47 18			mov	[edi].m3,eax
+
+ 00000A4F  8B 46 14			mov	eax,[esi].m8
+ 00000A52  89 47 1C			mov	[edi].m6,eax
+
+ 00000A55  8B 46 20			mov	eax,[esi].m9
+ 00000A58  89 47 20			mov	[edi].m9,eax
+
+ 00000A5B  58				pop	eax
+
+ 00000A5C  C3				ret
+
+
+
+				;mulitply 2 matrices, fill in dest.  returns eax=ptr to dest
+				;takes eax=dest, esi=src0, edi=scr1
+ 00000A5D			vm_matrix_x_matrix:
+					ifndef	NDEBUG
+ 00000A5D  3B C6			 cmp	eax,esi
+					 break_if	e,'matrix_x_matrix: dest==src0'
+ 00000A5F  74 02	     1		 je	??00A9
+ 00000A61  EB 34	     1		 jmp	??00A8
+ 00000A63
+ 00000A63  66| 9C	     3		 pushf		;save flags
+ 00000A65  50		     3		 push	eax	;mprintf trashes eax
+ 00000A66  EB 1C	     4		jmp	??00AB
+ 00000A68		     4	??00AA	label	byte
+ 00000A68  6D 61 74 72 69    5		 %db	'&@SubStr('matrix_x_matrix: dest==src0',??00AD-??00AF,??00AE-??00AD)'
+	   78 5F 78 5F 6D
+	   61 74 72 69 78
+	   3A 20 64 65 73
+	   74 3D 3D 73 72
+	   63 30
+ 00000A83  00		     4		db	0
+ 00000A84		     4	??00AB:
+ 00000A84  68 00000A68 R     7		 push	offset ??00AA
+ 00000A89  6A 00	     7		 push	0
+ 00000A8B  E8 00000000 E     4		call	mprintf_
+ 00000A90  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 00000A93  58		     3		 pop	eax
+ 00000A94  66| 9D	     3		 popf
+ 00000A96  CC		     2		 int	3
+ 00000A97		     1	??00A8:
+ 00000A97  3B C7			 cmp	eax,edi
+					 break_if	e,'matrix_x_matrix: dest==src1'
+ 00000A99  74 02	     1		 je	??00B5
+ 00000A9B  EB 34	     1		 jmp	??00B4
+ 00000A9D
+ 00000A9D  66| 9C	     3		 pushf		;save flags
+ 00000A9F  50		     3		 push	eax	;mprintf trashes eax
+ 00000AA0  EB 1C	     4		jmp	??00B7
+ 00000AA2		     4	??00B6	label	byte
+ 00000AA2  6D 61 74 72 69    5		 %db	'&@SubStr('matrix_x_matrix: dest==src1',??00B9-??00BB,??00BA-??00B9)'
+	   78 5F 78 5F 6D
+	   61 74 72 69 78
+	   3A 20 64 65 73
+	   74 3D 3D 73 72
+	   63 31
+ 00000ABD  00		     4		db	0
+ 00000ABE		     4	??00B7:
+ 00000ABE  68 00000AA2 R     7		 push	offset ??00B6
+ 00000AC3  6A 00	     7		 push	0
+ 00000AC5  E8 00000000 E     4		call	mprintf_
+ 00000ACA  83 C4 08	     4		add	esp,(@ArgCount()+2)*4	;fix stack
+ 00000ACD  58		     3		 pop	eax
+ 00000ACE  66| 9D	     3		 popf
+ 00000AD0  CC		     2		 int	3
+ 00000AD1		     1	??00B4:
+					endif
+
+					pushm	ebx,ecx,edx,ebp
+ 00000AD1  53		     2		 push	ebx
+ 00000AD2  51		     2		 push	ecx
+ 00000AD3  52		     2		 push	edx
+ 00000AD4  55		     2		 push	ebp
+
+ 00000AD5  8B E8			mov	ebp,eax	;ebp=dest
+
+				;;This code would do the same as the nine lines below it, but I'm sure
+				;;Mike would disapprove
+				;;	for	s0,<<m1,m2,m3>,<m4,m5,m6>,<m7,m8,m9>>
+				;;	 for	s1,<<m1,m4,m7>,<m2,m5,m8>,<m3,m6,m9>>
+				;;	  vv_mul	@ArgI(1,s0)+@ArgI(1,s1), s0, s1
+				;;	 endm
+				;;	endm
+
+					vv_mul	m1, m1,m2,m3, m1,m4,m7
+ 00000AD7  8B 06	     1		mov	eax,[esi].m1
+ 00000AD9  F7 2F	     1		imul	[edi].m1
+ 00000ADB  8B D8	     1		mov	ebx,eax
+ 00000ADD  8B CA	     1		mov	ecx,edx
+ 00000ADF  8B 46 0C	     1		mov	eax,[esi].m2
+ 00000AE2  F7 6F 04	     1		imul	[edi].m4
+ 00000AE5  03 D8	     1		add	ebx,eax
+ 00000AE7  13 CA	     1		adc	ecx,edx
+ 00000AE9  8B 46 18	     1		mov	eax,[esi].m3
+ 00000AEC  F7 6F 08	     1		imul	[edi].m7
+ 00000AEF  03 D8	     1		add	ebx,eax
+ 00000AF1  13 CA	     1		adc	ecx,edx
+ 00000AF3  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000AF7  89 5D 00	     1		mov	[ebp].m1,ebx
+					vv_mul	m2, m1,m2,m3, m2,m5,m8
+ 00000AFA  8B 06	     1		mov	eax,[esi].m1
+ 00000AFC  F7 6F 0C	     1		imul	[edi].m2
+ 00000AFF  8B D8	     1		mov	ebx,eax
+ 00000B01  8B CA	     1		mov	ecx,edx
+ 00000B03  8B 46 0C	     1		mov	eax,[esi].m2
+ 00000B06  F7 6F 10	     1		imul	[edi].m5
+ 00000B09  03 D8	     1		add	ebx,eax
+ 00000B0B  13 CA	     1		adc	ecx,edx
+ 00000B0D  8B 46 18	     1		mov	eax,[esi].m3
+ 00000B10  F7 6F 14	     1		imul	[edi].m8
+ 00000B13  03 D8	     1		add	ebx,eax
+ 00000B15  13 CA	     1		adc	ecx,edx
+ 00000B17  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000B1B  89 5D 0C	     1		mov	[ebp].m2,ebx
+					vv_mul	m3, m1,m2,m3, m3,m6,m9
+ 00000B1E  8B 06	     1		mov	eax,[esi].m1
+ 00000B20  F7 6F 18	     1		imul	[edi].m3
+ 00000B23  8B D8	     1		mov	ebx,eax
+ 00000B25  8B CA	     1		mov	ecx,edx
+ 00000B27  8B 46 0C	     1		mov	eax,[esi].m2
+ 00000B2A  F7 6F 1C	     1		imul	[edi].m6
+ 00000B2D  03 D8	     1		add	ebx,eax
+ 00000B2F  13 CA	     1		adc	ecx,edx
+ 00000B31  8B 46 18	     1		mov	eax,[esi].m3
+ 00000B34  F7 6F 20	     1		imul	[edi].m9
+ 00000B37  03 D8	     1		add	ebx,eax
+ 00000B39  13 CA	     1		adc	ecx,edx
+ 00000B3B  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000B3F  89 5D 18	     1		mov	[ebp].m3,ebx
+
+					vv_mul	m4, m4,m5,m6, m1,m4,m7
+ 00000B42  8B 46 04	     1		mov	eax,[esi].m4
+ 00000B45  F7 2F	     1		imul	[edi].m1
+ 00000B47  8B D8	     1		mov	ebx,eax
+ 00000B49  8B CA	     1		mov	ecx,edx
+ 00000B4B  8B 46 10	     1		mov	eax,[esi].m5
+ 00000B4E  F7 6F 04	     1		imul	[edi].m4
+ 00000B51  03 D8	     1		add	ebx,eax
+ 00000B53  13 CA	     1		adc	ecx,edx
+ 00000B55  8B 46 1C	     1		mov	eax,[esi].m6
+ 00000B58  F7 6F 08	     1		imul	[edi].m7
+ 00000B5B  03 D8	     1		add	ebx,eax
+ 00000B5D  13 CA	     1		adc	ecx,edx
+ 00000B5F  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000B63  89 5D 04	     1		mov	[ebp].m4,ebx
+					vv_mul	m5, m4,m5,m6, m2,m5,m8
+ 00000B66  8B 46 04	     1		mov	eax,[esi].m4
+ 00000B69  F7 6F 0C	     1		imul	[edi].m2
+ 00000B6C  8B D8	     1		mov	ebx,eax
+ 00000B6E  8B CA	     1		mov	ecx,edx
+ 00000B70  8B 46 10	     1		mov	eax,[esi].m5
+ 00000B73  F7 6F 10	     1		imul	[edi].m5
+ 00000B76  03 D8	     1		add	ebx,eax
+ 00000B78  13 CA	     1		adc	ecx,edx
+ 00000B7A  8B 46 1C	     1		mov	eax,[esi].m6
+ 00000B7D  F7 6F 14	     1		imul	[edi].m8
+ 00000B80  03 D8	     1		add	ebx,eax
+ 00000B82  13 CA	     1		adc	ecx,edx
+ 00000B84  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000B88  89 5D 10	     1		mov	[ebp].m5,ebx
+					vv_mul	m6, m4,m5,m6, m3,m6,m9
+ 00000B8B  8B 46 04	     1		mov	eax,[esi].m4
+ 00000B8E  F7 6F 18	     1		imul	[edi].m3
+ 00000B91  8B D8	     1		mov	ebx,eax
+ 00000B93  8B CA	     1		mov	ecx,edx
+ 00000B95  8B 46 10	     1		mov	eax,[esi].m5
+ 00000B98  F7 6F 1C	     1		imul	[edi].m6
+ 00000B9B  03 D8	     1		add	ebx,eax
+ 00000B9D  13 CA	     1		adc	ecx,edx
+ 00000B9F  8B 46 1C	     1		mov	eax,[esi].m6
+ 00000BA2  F7 6F 20	     1		imul	[edi].m9
+ 00000BA5  03 D8	     1		add	ebx,eax
+ 00000BA7  13 CA	     1		adc	ecx,edx
+ 00000BA9  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000BAD  89 5D 1C	     1		mov	[ebp].m6,ebx
+
+					vv_mul	m7, m7,m8,m9, m1,m4,m7
+ 00000BB0  8B 46 08	     1		mov	eax,[esi].m7
+ 00000BB3  F7 2F	     1		imul	[edi].m1
+ 00000BB5  8B D8	     1		mov	ebx,eax
+ 00000BB7  8B CA	     1		mov	ecx,edx
+ 00000BB9  8B 46 14	     1		mov	eax,[esi].m8
+ 00000BBC  F7 6F 04	     1		imul	[edi].m4
+ 00000BBF  03 D8	     1		add	ebx,eax
+ 00000BC1  13 CA	     1		adc	ecx,edx
+ 00000BC3  8B 46 20	     1		mov	eax,[esi].m9
+ 00000BC6  F7 6F 08	     1		imul	[edi].m7
+ 00000BC9  03 D8	     1		add	ebx,eax
+ 00000BCB  13 CA	     1		adc	ecx,edx
+ 00000BCD  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000BD1  89 5D 08	     1		mov	[ebp].m7,ebx
+					vv_mul	m8, m7,m8,m9, m2,m5,m8
+ 00000BD4  8B 46 08	     1		mov	eax,[esi].m7
+ 00000BD7  F7 6F 0C	     1		imul	[edi].m2
+ 00000BDA  8B D8	     1		mov	ebx,eax
+ 00000BDC  8B CA	     1		mov	ecx,edx
+ 00000BDE  8B 46 14	     1		mov	eax,[esi].m8
+ 00000BE1  F7 6F 10	     1		imul	[edi].m5
+ 00000BE4  03 D8	     1		add	ebx,eax
+ 00000BE6  13 CA	     1		adc	ecx,edx
+ 00000BE8  8B 46 20	     1		mov	eax,[esi].m9
+ 00000BEB  F7 6F 14	     1		imul	[edi].m8
+ 00000BEE  03 D8	     1		add	ebx,eax
+ 00000BF0  13 CA	     1		adc	ecx,edx
+ 00000BF2  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000BF6  89 5D 14	     1		mov	[ebp].m8,ebx
+					vv_mul	m9, m7,m8,m9, m3,m6,m9
+ 00000BF9  8B 46 08	     1		mov	eax,[esi].m7
+ 00000BFC  F7 6F 18	     1		imul	[edi].m3
+ 00000BFF  8B D8	     1		mov	ebx,eax
+ 00000C01  8B CA	     1		mov	ecx,edx
+ 00000C03  8B 46 14	     1		mov	eax,[esi].m8
+ 00000C06  F7 6F 1C	     1		imul	[edi].m6
+ 00000C09  03 D8	     1		add	ebx,eax
+ 00000C0B  13 CA	     1		adc	ecx,edx
+ 00000C0D  8B 46 20	     1		mov	eax,[esi].m9
+ 00000C10  F7 6F 20	     1		imul	[edi].m9
+ 00000C13  03 D8	     1		add	ebx,eax
+ 00000C15  13 CA	     1		adc	ecx,edx
+ 00000C17  0F AC CB 10	     1		shrd	ebx,ecx,16	;fixup ebx
+ 00000C1B  89 5D 20	     1		mov	[ebp].m9,ebx
+
+ 00000C1E  8B C5			mov	eax,ebp	;eax=ptr to dest
+					popm	ebx,ecx,edx,ebp
+ 00000C20  5D		     2		 pop	ebp
+ 00000C21  5A		     2		 pop	edx
+ 00000C22  59		     2		 pop	ecx
+ 00000C23  5B		     2		 pop	ebx
+
+ 00000C24  C3				ret
+
+				;computes the delta angle between two vectors
+				;two entry points: normalized and non-normalized vectors
+				;takes esi,edi=vectors, eax=optional forward vector
+				;returns ax=delta angle
+				;if the forward vector is NULL, the absolute values of the delta angle
+				;is returned.  If it is specified, the rotation around that vector from
+				;esi to edi is returned. 
+ 00000C25  50			vm_vec_delta_ang:	push	eax	;save forward vec
+
+ 00000C26  51				push	ecx	;trashed by normalize
+ 00000C27  E8 FFFFF653			call	vm_vec_normalize
+ 00000C2C  87 F7			xchg	esi,edi
+ 00000C2E  E8 FFFFF64C			call	vm_vec_normalize
+ 00000C33  87 F7			xchg	esi,edi	;in case forward vec specified
+ 00000C35  59				pop	ecx
+ 00000C36  EB 01			jmp	do_vda_dot
+
+ 00000C38			vm_vec_delta_ang_norm:
+ 00000C38  50				push	eax	;save forward vec
+ 00000C39  E8 FFFFF6EB		do_vda_dot:	call	vm_vec_dotprod
+ 00000C3E  E8 00000000 E		call	fix_acos	;now angle in ax
+ 00000C43  5B				pop	ebx	;get forward vec
+ 00000C44  0B DB			or	ebx,ebx	;null?
+ 00000C46  74 1D			jz	done_vda	;..yes
+				;do cross product to find sign of angle
+ 00000C48  52				push	edx	;save edx
+ 00000C49  50				push	eax	;save angle
+ 00000C4A  53				push	ebx	;save forward vec
+ 00000C4B  8D 05 00000034 R		lea	eax,tempv0	;new vec
+ 00000C51  E8 FFFFF710			call	vm_vec_crossprod	;esi,edi still set
+ 00000C56  8B F0			mov	esi,eax	;new vector
+ 00000C58  5F				pop	edi	;forward vec
+ 00000C59  E8 FFFFF6CB			call	vm_vec_dotprod	;eax=dotprod
+ 00000C5E  99				cdq		;get sign
+ 00000C5F  58				pop	eax	;get angle
+ 00000C60  33 C2			xor	eax,edx
+ 00000C62  2B C2			sub	eax,edx	;make sign correct
+ 00000C64  5A				pop	edx	;restore edx
+ 00000C65  C3			done_vda:	ret
+
+
+				;compute a rotation matrix from the forward vector and a rotation around
+				;that vector. takes esi=vector, ax=angle, edi=matrix. returns edi=dest matrix. 
+				;trashes esi,eax
+ 00000C66			vm_vec_ang_2_matrix:
+					pushm	eax,edx,ebx,ecx,esi
+ 00000C66  50		     2		 push	eax
+ 00000C67  52		     2		 push	edx
+ 00000C68  53		     2		 push	ebx
+ 00000C69  51		     2		 push	ecx
+ 00000C6A  56		     2		 push	esi
+
+ 00000C6B  E8 00000000 E		call	fix_sincos
+ 00000C70  A3 0000007E R		mov	sinb,eax
+ 00000C75  89 1D 00000082 R		mov	cosb,ebx
+
+
+				;extract heading & pitch from vector
+
+ 00000C7B  8B 46 04			mov	eax,[esi].y	;m6=-sp
+ 00000C7E  F7 D8			neg	eax
+ 00000C80  A3 00000076 R		mov	sinp,eax
+					fixmul	eax
+ 00000C85  F7 E8	     1		imul	eax
+ 00000C87  0F AC D0 10	     1		shrd	eax,edx,16
+ 00000C8B  2D 00010000			sub	eax,f1_0
+ 00000C90  F7 D8			neg	eax
+ 00000C92  E8 00000000 E		call	fix_sqrt	;eax=cp
+ 00000C97  A3 0000007A R		mov	cosp,eax
+ 00000C9C  8B D8			mov	ebx,eax
+
+ 00000C9E  8B 06			mov	eax,[esi].x	;sh
+					fixdiv	ebx
+ 00000CA0  8B D0	     1		mov	edx,eax
+ 00000CA2  C1 FA 10	     1		sar	edx,16
+ 00000CA5  C1 E0 10	     1		shl	eax,16
+ 00000CA8  F7 FB	     1		idiv	ebx
+ 00000CAA  A3 00000086 R		mov	sinh,eax
+
+ 00000CAF  8B 46 08			mov	eax,[esi].z	;ch
+					fixdiv	ebx
+ 00000CB2  8B D0	     1		mov	edx,eax
+ 00000CB4  C1 FA 10	     1		sar	edx,16
+ 00000CB7  C1 E0 10	     1		shl	eax,16
+ 00000CBA  F7 FB	     1		idiv	ebx
+ 00000CBC  A3 0000008A R		mov	cosh,eax
+
+ 00000CC1  E9 FFFFF92A			jmp	sincos_2_matrix
+
+				;compute the distance from a point to a plane.  takes the normalized normal
+				;of the plane (ebx), a point on the plane (edi), and the point to check (esi).
+				;returns distance in eax
+				;distance is signed, so negative dist is on the back of the plane
+ 00000CC6			vm_dist_to_plane:	pushm	esi,edi
+ 00000CC6  56		     2		 push	esi
+ 00000CC7  57		     2		 push	edi
+
+ 00000CC8  8D 05 00000034 R		lea	eax,tempv0
+ 00000CCE  E8 FFFFF348			call	vm_vec_sub	;vecs in esi,edi
+
+ 00000CD3  8B F0			mov	esi,eax	;vector plane -> point
+ 00000CD5  8B FB			mov	edi,ebx	;normal
+ 00000CD7  E8 FFFFF64D			call	vm_vec_dotprod
+
+					popm	esi,edi
+ 00000CDC  5F		     2		 pop	edi
+ 00000CDD  5E		     2		 pop	esi
+ 00000CDE  C3				ret
+
+				;extract the angles from a matrix.  takes esi=matrix, fills in edi=angvec
+ 00000CDF			vm_extract_angles_matrix:
+					pushm	eax,ebx,edx,ecx
+ 00000CDF  50		     2		 push	eax
+ 00000CE0  53		     2		 push	ebx
+ 00000CE1  52		     2		 push	edx
+ 00000CE2  51		     2		 push	ecx
+
+				;extract heading & pitch from forward vector
+
+ 00000CE3  8B 46 20			mov	eax,[esi].fvec.z	;ch
+ 00000CE6  8B 5E 18			mov	ebx,[esi].fvec.x	;sh
+
+ 00000CE9  8B CB			mov	ecx,ebx	;check for z==x==0
+ 00000CEB  0B C8			or	ecx,eax
+ 00000CED  74 05			jz	zero_head	;zero, use head=0
+ 00000CEF  E8 00000000 E		call	fix_atan2
+ 00000CF4  66| 89 47 04		zero_head:	mov	[edi].head,ax	;save heading
+					
+ 00000CF8  E8 00000000 E		call	fix_sincos	;get back sh
+
+ 00000CFD  50				push	eax	;save sine
+					abs_eax
+ 00000CFE  99		     1		cdq
+ 00000CFF  33 C2	     1		xor	eax,edx
+ 00000D01  2B C2	     1		sub	eax,edx
+ 00000D03  8B C8			mov	ecx,eax	;save abs(sine)
+ 00000D05  8B C3			mov	eax,ebx
+					abs_eax		;abs(cos)
+ 00000D07  99		     1		cdq
+ 00000D08  33 C2	     1		xor	eax,edx
+ 00000D0A  2B C2	     1		sub	eax,edx
+ 00000D0C  3B C1			cmp	eax,ecx	;which is larger?
+ 00000D0E  58				pop	eax	;get sine back
+ 00000D0F  7F 07			jg	use_cos
+
+				;sine is larger, so use it
+ 00000D11  8B D8			mov	ebx,eax	;ebx=sine heading
+ 00000D13  8B 46 18			mov	eax,[esi].m3	;cp = shcp / sh
+ 00000D16  EB 03			jmp	get_cosp
+
+				;cosine is larger, so use it
+ 00000D18			use_cos:
+
+ 00000D18  8B 46 20			mov	eax,[esi].fvec.z	;get chcp
+ 00000D1B			get_cosp:	fixdiv	ebx	;cp = chcp / ch
+ 00000D1B  8B D0	     1		mov	edx,eax
+ 00000D1D  C1 FA 10	     1		sar	edx,16
+ 00000D20  C1 E0 10	     1		shl	eax,16
+ 00000D23  F7 FB	     1		idiv	ebx
+
+
+ 00000D25  50				push	eax	;save cp
+
+					;eax = x (cos p)
+ 00000D26  8B 5E 1C			mov	ebx,[esi].fvec.y	;fvec.y = -sp
+ 00000D29  F7 DB			neg	ebx	;ebx = y (sin)
+ 00000D2B  8B CB			mov	ecx,ebx	;check for z==x==0
+ 00000D2D  0B C8			or	ecx,eax
+ 00000D2F  74 05			jz	zero_pitch	;bogus vec, set p=0
+ 00000D31  E8 00000000 E		call	fix_atan2
+ 00000D36  66| 89 07		zero_pitch:	mov	[edi].pitch,ax
+
+ 00000D39  59				pop	ecx	;get cp
+ 00000D3A  E3 30			jecxz	cp_zero
+
+ 00000D3C  8B 46 04			mov	eax,[esi].m4	;m4 = sbcp
+					fixdiv	ecx	;get sb
+ 00000D3F  8B D0	     1		mov	edx,eax
+ 00000D41  C1 FA 10	     1		sar	edx,16
+ 00000D44  C1 E0 10	     1		shl	eax,16
+ 00000D47  F7 F9	     1		idiv	ecx
+ 00000D49  8B D8			mov	ebx,eax	;save sb
+
+ 00000D4B  8B 46 10			mov	eax,[esi].m5	;get cbcp
+					fixdiv	ecx	;get cb
+ 00000D4E  8B D0	     1		mov	edx,eax
+ 00000D50  C1 FA 10	     1		sar	edx,16
+ 00000D53  C1 E0 10	     1		shl	eax,16
+ 00000D56  F7 F9	     1		idiv	ecx
+ 00000D58  8B CB			mov	ecx,ebx	;check for z==x==0
+ 00000D5A  0B C8			or	ecx,eax
+ 00000D5C  74 05			jz	zero_bank	;bogus vec, set n=0
+ 00000D5E  E8 00000000 E		call	fix_atan2
+ 00000D63  66| 89 47 02		zero_bank:	mov	[edi].bank,ax
+
+ 00000D67			m_extract_done:
+					popm	eax,ebx,edx,ecx
+ 00000D67  59		     2		 pop	ecx
+ 00000D68  5A		     2		 pop	edx
+ 00000D69  5B		     2		 pop	ebx
+ 00000D6A  58		     2		 pop	eax
+
+ 00000D6B  C3				ret
+
+				;the cosine of pitch is zero.  we're pitched straight up. say no bank
+ 00000D6C  66| C7 47 02		cp_zero:	mov	[edi].bank,0	;no bank
+	   0000
+
+					popm	eax,ebx,edx,ecx
+ 00000D72  59		     2		 pop	ecx
+ 00000D73  5A		     2		 pop	edx
+ 00000D74  5B		     2		 pop	ebx
+ 00000D75  58		     2		 pop	eax
+ 00000D76  C3				ret
+
+
+				;extract the angles from a vector, assuming zero bank. 
+				;takes esi=vec, edi=angvec
+				;note versions for normalized and not normalized vector
+				;unnormalized version TRASHES ESI
+ 00000D77			vm_extract_angles_vector:
+ 00000D77  57				push	edi
+ 00000D78  8D 3D 00000034 R		lea	edi,tempv0
+ 00000D7E  E8 FFFFF506			call	vm_vec_copy_normalize	;ecx=mag
+ 00000D83  8B F7			mov	esi,edi
+ 00000D85  5F				pop	edi
+ 00000D86  E3 2B			jecxz	extract_done
+
+ 00000D88			vm_extract_angles_vector_normalized:
+					pushm	eax,ebx
+ 00000D88  50		     2		 push	eax
+ 00000D89  53		     2		 push	ebx
+
+ 00000D8A  66| C7 47 02			mov	[edi].bank,0	;always zero bank
+	   0000
+
+ 00000D90  8B 46 04			mov	eax,[esi].y
+ 00000D93  F7 D8			neg	eax
+ 00000D95  E8 00000000 E		call	fix_asin
+ 00000D9A  66| 89 07			mov	[edi].pitch,ax	;p = asin(-y)
+
+ 00000D9D  8B 46 08			mov	eax,[esi].z
+ 00000DA0  8B 1E			mov	ebx,[esi].x
+ 00000DA2  0B D8			or	ebx,eax
+ 00000DA4  74 07			jz	zero_head2	;check for up vector
+
+ 00000DA6  8B 1E			mov	ebx,[esi].x	;get x again
+ 00000DA8  E8 00000000 E		call	fix_atan2
+ 00000DAD  66| 89 47 04		zero_head2:	mov	[edi].head,ax	;h = atan2(x,z) (or zero)
+
+
+					popm	eax,ebx
+ 00000DB1  5B		     2		 pop	ebx
+ 00000DB2  58		     2		 pop	eax
+ 00000DB3  C3			extract_done:	ret
+
+
+ 0DB4				_TEXT	ends
+					end
+Microsoft (R) Macro Assembler Version 6.11		    04/10/96 12:57:34
+vecmat.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+@ArgCount  . . . . . . . . . . .	Func
+@ArgRev  . . . . . . . . . . . .	Func
+@HighBit . . . . . . . . . . . .	Func
+@LowBit  . . . . . . . . . . . .	Func
+abs_eax  . . . . . . . . . . . .	Proc
+break_if . . . . . . . . . . . .	Proc
+dbstr  . . . . . . . . . . . . .	Proc
+debug_at . . . . . . . . . . . .	Proc
+debug_brk  . . . . . . . . . . .	Proc
+debug  . . . . . . . . . . . . .	Proc
+extb . . . . . . . . . . . . . .	Proc
+extdef . . . . . . . . . . . . .	Proc
+extd . . . . . . . . . . . . . .	Proc
+extfa  . . . . . . . . . . . . .	Proc
+extf . . . . . . . . . . . . . .	Proc
+extgen . . . . . . . . . . . . .	Proc
+extn . . . . . . . . . . . . . .	Proc
+extw . . . . . . . . . . . . . .	Proc
+fixdiv . . . . . . . . . . . . .	Proc
+fixmuldiv  . . . . . . . . . . .	Proc
+fixmul . . . . . . . . . . . . .	Proc
+imulc  . . . . . . . . . . . . .	Proc
+m2m_neg  . . . . . . . . . . . .	Proc
+m2m  . . . . . . . . . . . . . .	Proc
+mprintf_at . . . . . . . . . . .	Proc
+mprintf  . . . . . . . . . . . .	Proc
+popm . . . . . . . . . . . . . .	Proc
+pushlong . . . . . . . . . . . .	Proc
+pushml . . . . . . . . . . . . .	Proc
+pushm  . . . . . . . . . . . . .	Proc
+vm_acopy . . . . . . . . . . . .	Proc
+vm_copy  . . . . . . . . . . . .	Proc
+vv_mul . . . . . . . . . . . . .	Proc
+
+
+Structures and Unions:
+
+                N a m e                  Size
+                                         Offset      Type
+
+vms_angvec . . . . . . . . . . .	 0006
+  pitch  . . . . . . . . . . . .	 0000	     Word
+  bank . . . . . . . . . . . . .	 0002	     Word
+  head . . . . . . . . . . . . .	 0004	     Word
+vms_matrix . . . . . . . . . . .	 0024
+  m1 . . . . . . . . . . . . . .	 0000	     DWord
+  m4 . . . . . . . . . . . . . .	 0004	     DWord
+  m7 . . . . . . . . . . . . . .	 0008	     DWord
+  m2 . . . . . . . . . . . . . .	 000C	     DWord
+  m5 . . . . . . . . . . . . . .	 0010	     DWord
+  m8 . . . . . . . . . . . . . .	 0014	     DWord
+  m3 . . . . . . . . . . . . . .	 0018	     DWord
+  m6 . . . . . . . . . . . . . .	 001C	     DWord
+  m9 . . . . . . . . . . . . . .	 0020	     DWord
+  rvec . . . . . . . . . . . . .	 0000	     DWord
+  uvec . . . . . . . . . . . . .	 000C	     DWord
+  fvec . . . . . . . . . . . . .	 0018	     DWord
+vms_svec . . . . . . . . . . . .	 0006
+  sv_x . . . . . . . . . . . . .	 0000	     Word
+  sv_y . . . . . . . . . . . . .	 0002	     Word
+  sv_z . . . . . . . . . . . . .	 0004	     Word
+  sv_xyz . . . . . . . . . . . .	 0000	     Word
+vms_vector . . . . . . . . . . .	 000C
+  x  . . . . . . . . . . . . . .	 0000	     DWord
+  y  . . . . . . . . . . . . . .	 0004	     DWord
+  z  . . . . . . . . . . . . . .	 0008	     DWord
+  xyz  . . . . . . . . . . . . .	 0000	     DWord
+
+
+Types:
+
+                N a m e                  Size     Attr
+
+bool . . . . . . . . . . . . . .	 0001	  Byte 
+fixang . . . . . . . . . . . . .	 0002	  Word 
+fix  . . . . . . . . . . . . . .	 0004	  DWord 
+long . . . . . . . . . . . . . .	 0004	  DWord 
+ubyte  . . . . . . . . . . . . .	 0001	  Byte 
+uint . . . . . . . . . . . . . .	 0004	  DWord 
+ulong  . . . . . . . . . . . . .	 0004	  DWord 
+ushort . . . . . . . . . . . . .	 0002	  Word 
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+_DATA  . . . . . . . . . . . . .	32 Bit	 00BE	  DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0DB4	  DWord	  Public  'CODE'	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+??0002 . . . . . . . . . . . . .	Text   	 <edx,eax>
+??0006 . . . . . . . . . . . . .	Text   	 <edx,eax>
+??000A . . . . . . . . . . . . .	Text   	 <edx,eax>
+??000E . . . . . . . . . . . . .	Text   	 <edx,eax>
+??0012 . . . . . . . . . . . . .	Text   	 <edx,eax>
+??0016 . . . . . . . . . . . . .	Text   	 <edx,ecx,ebx>
+??001A . . . . . . . . . . . . .	Text   	 <edx,ecx,ebx>
+??001F . . . . . . . . . . . . .	Text   	 <edx,ecx,ebx>
+??0023 . . . . . . . . . . . . .	Text   	 <edx,ebx,eax,ebp>
+??0027 . . . . . . . . . . . . .	Text   	 <esi,edi,eax>
+??002B . . . . . . . . . . . . .	Text   	 <edx,ebx,eax>
+??002F . . . . . . . . . . . . .	Text   	 <edx,ebx,eax>
+??0033 . . . . . . . . . . . . .	Text   	 <edx,ecx,ebx>
+??0035 . . . . . . . . . . . . .	L Near	 039A	  _TEXT	
+??0036 . . . . . . . . . . . . .	L Near	 036C	  _TEXT	
+??0037 . . . . . . . . . . . . .	Byte	 0371	  _TEXT	
+??0038 . . . . . . . . . . . . .	L Near	 0387	  _TEXT	
+??0039 . . . . . . . . . . . . .	Number	 0000h	 
+??003A . . . . . . . . . . . . .	Number	 0002h	 
+??003B . . . . . . . . . . . . .	Number	 0017h	 
+??003C . . . . . . . . . . . . .	Number	 0000h	 
+??003E . . . . . . . . . . . . .	Number	 0004h	 
+??003F . . . . . . . . . . . . .	Number	 0000h	 
+??0040 . . . . . . . . . . . . .	Number	 0000h	 
+??0041 . . . . . . . . . . . . .	L Near	 03CE	  _TEXT	
+??0042 . . . . . . . . . . . . .	L Near	 03A0	  _TEXT	
+??0043 . . . . . . . . . . . . .	Byte	 03A5	  _TEXT	
+??0044 . . . . . . . . . . . . .	L Near	 03BB	  _TEXT	
+??0045 . . . . . . . . . . . . .	Number	 0000h	 
+??0046 . . . . . . . . . . . . .	Number	 0002h	 
+??0047 . . . . . . . . . . . . .	Number	 0017h	 
+??0048 . . . . . . . . . . . . .	Number	 0000h	 
+??004A . . . . . . . . . . . . .	Number	 0004h	 
+??004B . . . . . . . . . . . . .	Number	 0000h	 
+??004C . . . . . . . . . . . . .	Number	 0000h	 
+??004E . . . . . . . . . . . . .	L Near	 0427	  _TEXT	
+??004F . . . . . . . . . . . . .	L Near	 03F9	  _TEXT	
+??0050 . . . . . . . . . . . . .	Byte	 03FE	  _TEXT	
+??0051 . . . . . . . . . . . . .	L Near	 0414	  _TEXT	
+??0052 . . . . . . . . . . . . .	Number	 0000h	 
+??0053 . . . . . . . . . . . . .	Number	 0002h	 
+??0054 . . . . . . . . . . . . .	Number	 0017h	 
+??0055 . . . . . . . . . . . . .	Number	 0000h	 
+??0057 . . . . . . . . . . . . .	Number	 0004h	 
+??0058 . . . . . . . . . . . . .	Number	 0000h	 
+??0059 . . . . . . . . . . . . .	Number	 0000h	 
+??005A . . . . . . . . . . . . .	L Near	 047B	  _TEXT	
+??005B . . . . . . . . . . . . .	L Near	 044D	  _TEXT	
+??005C . . . . . . . . . . . . .	Byte	 0452	  _TEXT	
+??005D . . . . . . . . . . . . .	L Near	 0468	  _TEXT	
+??005E . . . . . . . . . . . . .	Number	 0000h	 
+??005F . . . . . . . . . . . . .	Number	 0002h	 
+??0060 . . . . . . . . . . . . .	Number	 0017h	 
+??0061 . . . . . . . . . . . . .	Number	 0000h	 
+??0063 . . . . . . . . . . . . .	Number	 0004h	 
+??0064 . . . . . . . . . . . . .	Number	 0000h	 
+??0065 . . . . . . . . . . . . .	Number	 0000h	 
+??0066 . . . . . . . . . . . . .	L Near	 04CF	  _TEXT	
+??0067 . . . . . . . . . . . . .	L Near	 04A1	  _TEXT	
+??0068 . . . . . . . . . . . . .	Byte	 04A6	  _TEXT	
+??0069 . . . . . . . . . . . . .	L Near	 04BC	  _TEXT	
+??006A . . . . . . . . . . . . .	Number	 0000h	 
+??006B . . . . . . . . . . . . .	Number	 0002h	 
+??006C . . . . . . . . . . . . .	Number	 0017h	 
+??006D . . . . . . . . . . . . .	Number	 0000h	 
+??006F . . . . . . . . . . . . .	Number	 0004h	 
+??0070 . . . . . . . . . . . . .	Number	 0000h	 
+??0071 . . . . . . . . . . . . .	Number	 0000h	 
+??0073 . . . . . . . . . . . . .	Text   	 <ebp,edx,ecx,ebx>
+??0078 . . . . . . . . . . . . .	Text   	 <edx,ecx,ebx>
+??007B . . . . . . . . . . . . .	Text   	 <edi,esi>
+??007F . . . . . . . . . . . . .	Text   	 <esi,ecx,ebx,edx,eax>
+??0082 . . . . . . . . . . . . .	L Near	 071E	  _TEXT	
+??0083 . . . . . . . . . . . . .	L Near	 06D6	  _TEXT	
+??0084 . . . . . . . . . . . . .	Byte	 06DB	  _TEXT	
+??0085 . . . . . . . . . . . . .	L Near	 070B	  _TEXT	
+??0086 . . . . . . . . . . . . .	Number	 0000h	 
+??0087 . . . . . . . . . . . . .	Number	 0002h	 
+??0088 . . . . . . . . . . . . .	Number	 0031h	 
+??0089 . . . . . . . . . . . . .	Number	 0000h	 
+??008B . . . . . . . . . . . . .	Number	 0004h	 
+??008C . . . . . . . . . . . . .	Number	 0000h	 
+??008D . . . . . . . . . . . . .	Number	 0000h	 
+??008E . . . . . . . . . . . . .	Byte	 0868	  _TEXT	
+??008F . . . . . . . . . . . . .	L Near	 087F	  _TEXT	
+??0090 . . . . . . . . . . . . .	Number	 0000h	 
+??0091 . . . . . . . . . . . . .	Number	 0002h	 
+??0092 . . . . . . . . . . . . .	Number	 0018h	 
+??0093 . . . . . . . . . . . . .	Number	 0000h	 
+??0095 . . . . . . . . . . . . .	Number	 0004h	 
+??0096 . . . . . . . . . . . . .	Number	 0000h	 
+??0097 . . . . . . . . . . . . .	Number	 0000h	 
+??0098 . . . . . . . . . . . . .	L Near	 0990	  _TEXT	
+??0099 . . . . . . . . . . . . .	L Near	 0962	  _TEXT	
+??009A . . . . . . . . . . . . .	Byte	 0967	  _TEXT	
+??009B . . . . . . . . . . . . .	L Near	 097D	  _TEXT	
+??009C . . . . . . . . . . . . .	Number	 0000h	 
+??009D . . . . . . . . . . . . .	Number	 0002h	 
+??009E . . . . . . . . . . . . .	Number	 0017h	 
+??009F . . . . . . . . . . . . .	Number	 0000h	 
+??00A1 . . . . . . . . . . . . .	Number	 0004h	 
+??00A2 . . . . . . . . . . . . .	Number	 0000h	 
+??00A3 . . . . . . . . . . . . .	Number	 0000h	 
+??00A6 . . . . . . . . . . . . .	Text   	 <ebp,edx,ecx,ebx>
+??00A8 . . . . . . . . . . . . .	L Near	 0A97	  _TEXT	
+??00A9 . . . . . . . . . . . . .	L Near	 0A63	  _TEXT	
+??00AA . . . . . . . . . . . . .	Byte	 0A68	  _TEXT	
+??00AB . . . . . . . . . . . . .	L Near	 0A84	  _TEXT	
+??00AC . . . . . . . . . . . . .	Number	 0000h	 
+??00AD . . . . . . . . . . . . .	Number	 0002h	 
+??00AE . . . . . . . . . . . . .	Number	 001Dh	 
+??00AF . . . . . . . . . . . . .	Number	 0000h	 
+??00B1 . . . . . . . . . . . . .	Number	 0004h	 
+??00B2 . . . . . . . . . . . . .	Number	 0000h	 
+??00B3 . . . . . . . . . . . . .	Number	 0000h	 
+??00B4 . . . . . . . . . . . . .	L Near	 0AD1	  _TEXT	
+??00B5 . . . . . . . . . . . . .	L Near	 0A9D	  _TEXT	
+??00B6 . . . . . . . . . . . . .	Byte	 0AA2	  _TEXT	
+??00B7 . . . . . . . . . . . . .	L Near	 0ABE	  _TEXT	
+??00B8 . . . . . . . . . . . . .	Number	 0000h	 
+??00B9 . . . . . . . . . . . . .	Number	 0002h	 
+??00BA . . . . . . . . . . . . .	Number	 001Dh	 
+??00BB . . . . . . . . . . . . .	Number	 0000h	 
+??00BD . . . . . . . . . . . . .	Number	 0004h	 
+??00BE . . . . . . . . . . . . .	Number	 0000h	 
+??00BF . . . . . . . . . . . . .	Number	 0000h	 
+??00C2 . . . . . . . . . . . . .	Text   	 <ebp,edx,ecx,ebx>
+??00C7 . . . . . . . . . . . . .	Text   	 <edi,esi>
+??00CB . . . . . . . . . . . . .	Text   	 <ecx,edx,ebx,eax>
+??00CE . . . . . . . . . . . . .	Text   	 <ecx,edx,ebx,eax>
+??00D2 . . . . . . . . . . . . .	Text   	 <ebx,eax>
+AVG4_ENABLED . . . . . . . . . .	Number	 0000h	 
+V2MN_ENABLED . . . . . . . . . .	Number	 0000h	 
+_VECMAT_INC  . . . . . . . . . .	Number	 0001h	 
+_vmd_identity_matrix . . . . . .	vms_matrix  009A     _DATA	Public
+_vmd_zero_vector . . . . . . . .	vms_vector  008E     _DATA	Public
+bad_vector2  . . . . . . . . . .	L Near	 07A4	  _TEXT	
+bad_vector3  . . . . . . . . . .	L Near	 0861	  _TEXT	
+bad_vector . . . . . . . . . . .	L Near	 0862	  _TEXT	
+b  . . . . . . . . . . . . . . .	Text   	 byte ptr
+check_2_down . . . . . . . . . .	L Near	 0521	  _TEXT	
+check_2_up . . . . . . . . . . .	L Near	 0552	  _TEXT	
+check_4_down . . . . . . . . . .	L Near	 0511	  _TEXT	
+check_4_up . . . . . . . . . . .	L Near	 0542	  _TEXT	
+check_vec  . . . . . . . . . . .	L Near	 04E8	  _TEXT	
+copy_into_matrix . . . . . . . .	L Near	 0815	  _TEXT	
+cosb . . . . . . . . . . . . . .	DWord	 0082	  _DATA	
+cosh . . . . . . . . . . . . . .	DWord	 008A	  _DATA	
+cosp . . . . . . . . . . . . . .	DWord	 007A	  _DATA	
+cp_zero  . . . . . . . . . . . .	L Near	 0D6C	  _TEXT	
+do_add . . . . . . . . . . . . .	L Near	 01A1	  _TEXT	
+do_vda_dot . . . . . . . . . . .	L Near	 0C39	  _TEXT	
+done_v2m . . . . . . . . . . . .	L Near	 095A	  _TEXT	
+done_vda . . . . . . . . . . . .	L Near	 0C65	  _TEXT	
+eax_ok2  . . . . . . . . . . . .	L Near	 017F	  _TEXT	
+eax_ok . . . . . . . . . . . . .	L Near	 01D3	  _TEXT	
+ebx_ok2  . . . . . . . . . . . .	L Near	 0188	  _TEXT	
+ebx_ok . . . . . . . . . . . . .	L Near	 01BF	  _TEXT	
+ecx_ok2  . . . . . . . . . . . .	L Near	 0191	  _TEXT	
+ecx_ok . . . . . . . . . . . . .	L Near	 01C9	  _TEXT	
+extract_done . . . . . . . . . .	L Near	 0DB3	  _TEXT	
+f0_0 . . . . . . . . . . . . . .	Number	 0000h	 
+f0_1 . . . . . . . . . . . . . .	Number	 199Ah	 
+f0_5 . . . . . . . . . . . . . .	Number	 8000h	 
+f10_0  . . . . . . . . . . . . .	Number	 000A0000h   
+f1_0 . . . . . . . . . . . . . .	Number	 00010000h   
+f2_0 . . . . . . . . . . . . . .	Number	 00020000h   
+f3_0 . . . . . . . . . . . . . .	Number	 00030000h   
+fix_acos . . . . . . . . . . . .	L Near	 0000	  External
+fix_asin . . . . . . . . . . . .	L Near	 0000	  External
+fix_atan2  . . . . . . . . . . .	L Near	 0000	  External
+fix_fastsincos . . . . . . . . .	L Near	 0000	  External
+fix_inc  . . . . . . . . . . . .	Number	 0001h	 
+fix_sincos . . . . . . . . . . .	L Near	 0000	  External
+fix_sqrt . . . . . . . . . . . .	L Near	 0000	  External
+get_cosp . . . . . . . . . . . .	L Near	 0D1B	  _TEXT	
+just_forward_vec . . . . . . . .	L Near	 0893	  _TEXT	
+long_sqrt  . . . . . . . . . . .	L Near	 0000	  External
+m_extract_done . . . . . . . . .	L Near	 0D67	  _TEXT	
+mag_quick_eax_ebx_ecx  . . . . .	L Near	 0191	  _TEXT	
+mprintf_ . . . . . . . . . . . .	L Near	 0000	  _TEXT	External
+no_div2  . . . . . . . . . . . .	L Near	 0263	  _TEXT	
+no_div_q . . . . . . . . . . . .	L Near	 0325	  _TEXT	
+no_div . . . . . . . . . . . . .	L Near	 02DD	  _TEXT	
+no_oflow . . . . . . . . . . . .	L Near	 0362	  _TEXT	
+no_swap_ab . . . . . . . . . . .	L Near	 0196	  _TEXT	
+not_2_down . . . . . . . . . . .	L Near	 0531	  _TEXT	
+not_2_up . . . . . . . . . . . .	L Near	 0562	  _TEXT	
+not_too_big  . . . . . . . . . .	L Near	 053A	  _TEXT	
+not_too_small  . . . . . . . . .	L Near	 056A	  _TEXT	
+not_up . . . . . . . . . . . . .	L Near	 08F7	  _TEXT	
+null_vector  . . . . . . . . . .	L Near	 056B	  _TEXT	
+quad_sqrt  . . . . . . . . . . .	L Near	 0000	  External
+rcsid  . . . . . . . . . . . . .	Byte	 0000	  _DATA	
+sinb . . . . . . . . . . . . . .	DWord	 007E	  _DATA	
+sincos_2_matrix  . . . . . . . .	L Near	 05F0	  _TEXT	
+sinh . . . . . . . . . . . . . .	DWord	 0086	  _DATA	
+sinp . . . . . . . . . . . . . .	DWord	 0076	  _DATA	
+tempav . . . . . . . . . . . . .	vms_angvec  0070     _DATA	
+tempv0 . . . . . . . . . . . . .	vms_vector  0034     _DATA	
+tempv1 . . . . . . . . . . . . .	vms_vector  0040     _DATA	
+types_inc  . . . . . . . . . . .	Number	 0001h	 
+use_cos  . . . . . . . . . . . .	L Near	 0D18	  _TEXT	
+use_up_vec . . . . . . . . . . .	L Near	 07B0	  _TEXT	
+vm_angles_2_matrix . . . . . . .	L Near	 05B0	  _TEXT	Public
+vm_copy_transpose_matrix . . . .	L Near	 0A26	  _TEXT	Public
+vm_dist_to_plane . . . . . . . .	L Near	 0CC6	  _TEXT	Public
+vm_extract_angles_matrix . . . .	L Near	 0CDF	  _TEXT	Public
+vm_extract_angles_vector_normalized 	L Near	 0D88	  _TEXT	Public
+vm_extract_angles_vector . . . .	L Near	 0D77	  _TEXT	Public
+vm_matrix_x_matrix . . . . . . .	L Near	 0A5D	  _TEXT	Public
+vm_transpose_matrix  . . . . . .	L Near	 0A08	  _TEXT	Public
+vm_vec_add2  . . . . . . . . . .	L Near	 0036	  _TEXT	Public
+vm_vec_add . . . . . . . . . . .	L Near	 0000	  _TEXT	Public
+vm_vec_ang_2_matrix  . . . . . .	L Near	 0C66	  _TEXT	Public
+vm_vec_avg4  . . . . . . . . . .	L Near	 0000	  External
+vm_vec_avg . . . . . . . . . . .	L Near	 005C	  _TEXT	Public
+vm_vec_copy_normalize_quick  . .	L Near	 02EB	  _TEXT	Public
+vm_vec_copy_normalize  . . . . .	L Near	 0289	  _TEXT	Public
+vm_vec_copy_scale  . . . . . . .	L Near	 00A4	  _TEXT	Public
+vm_vec_crossprod . . . . . . . .	L Near	 0366	  _TEXT	Public
+vm_vec_delta_ang_norm  . . . . .	L Near	 0C38	  _TEXT	Public
+vm_vec_delta_ang . . . . . . . .	L Near	 0C25	  _TEXT	Public
+vm_vec_dist_quick  . . . . . . .	L Near	 01B4	  _TEXT	Public
+vm_vec_dist  . . . . . . . . . .	L Near	 0146	  _TEXT	Public
+vm_vec_dotprod . . . . . . . . .	L Near	 0329	  _TEXT	Public
+vm_vec_mag_quick . . . . . . . .	L Near	 0174	  _TEXT	Public
+vm_vec_mag . . . . . . . . . . .	L Near	 01D5	  _TEXT	Public
+vm_vec_normalize_quick . . . . .	L Near	 02E1	  _TEXT	Public
+vm_vec_normalized_dir_quick  . .	L Near	 0268	  _TEXT	Public
+vm_vec_normalized_dir  . . . . .	L Near	 01FB	  _TEXT	Public
+vm_vec_normalize . . . . . . . .	L Near	 027F	  _TEXT	Public
+vm_vec_normal  . . . . . . . . .	L Near	 04D9	  _TEXT	Public
+vm_vec_perp  . . . . . . . . . .	L Near	 056C	  _TEXT	Public
+vm_vec_rotate  . . . . . . . . .	L Near	 095C	  _TEXT	Public
+vm_vec_scale2  . . . . . . . . .	L Near	 0121	  _TEXT	Public
+vm_vec_scale_add2  . . . . . . .	L Near	 00FA	  _TEXT	Public
+vm_vec_scale_add . . . . . . . .	L Near	 00CB	  _TEXT	Public
+vm_vec_scale . . . . . . . . . .	L Near	 007D	  _TEXT	Public
+vm_vec_sub2  . . . . . . . . . .	L Near	 0049	  _TEXT	Public
+vm_vec_sub . . . . . . . . . . .	L Near	 001B	  _TEXT	Public
+vm_vector_2_matrix_norm  . . . .	L Near	 0000	  External
+vm_vector_2_matrix . . . . . . .	L Near	 06CF	  _TEXT	Public
+vmvs_out . . . . . . . . . . . .	L Near	 0145	  _TEXT	
+w  . . . . . . . . . . . . . . .	Text   	 word ptr
+xvec . . . . . . . . . . . . . .	vms_vector  004C     _DATA	
+yvec . . . . . . . . . . . . . .	vms_vector  0058     _DATA	
+zero_bank  . . . . . . . . . . .	L Near	 0D63	  _TEXT	
+zero_head2 . . . . . . . . . . .	L Near	 0DAD	  _TEXT	
+zero_head  . . . . . . . . . . .	L Near	 0CF4	  _TEXT	
+zero_pitch . . . . . . . . . . .	L Near	 0D36	  _TEXT	
+zvec . . . . . . . . . . . . . .	vms_vector  0064     _DATA	
+
+	   0 Warnings
+	   0 Errors

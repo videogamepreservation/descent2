@@ -1,0 +1,5 @@
+system dos4g option quiet debug all 
+file .\obj\fixtest.obj
+library .\fix.lib,
+ c:\miner\source\lib\io.lib
+name .\fixtest

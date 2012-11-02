@@ -1,0 +1,14 @@
+system dos4g option quiet debug all 
+file .\obj\3dtest.obj,
+ .\obj\segment.obj,
+ .\obj\trakball.obj
+library .\3d.lib,
+ h:\miner\source\lib\vecmat.lib,
+ h:\miner\source\lib\gr.lib,
+ h:\miner\source\lib\io.lib,
+ h:\miner\source\lib\fix.lib,
+ h:\miner\source\lib\div0.lib,
+ h:\miner\source\lib\texmap.lib,
+ h:\miner\source\lib\misc.lib,
+ h:\miner\source\lib\bm.lib
+name 3dtest

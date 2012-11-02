@@ -1,0 +1,23 @@
+#
+# Master makefile for Miner source
+#
+# Makes all the executable by visiting subdirs and making there
+#
+
+CLEAN_TARGS = $(OBJDIR)Å.obj
+
+INSTALL_TARGS = cfile.lib cfile.h nocfile.h
+
+LIBS = cfile
+
+CFILE_OBJS = cfile.obj
+
+#all Miner makefiles should include this
+#%include $(INIT)\makefile.def
+.INCLUDE : "BigRed:miner2:init:makefile.def"
+
+### OPUS MKMF:  Do not remove this line!  Generated dependencies follow.
+
+cfile.obj: cfile.h ctype.h errno.h error.h fcntl.h unistd.h \
+	 mem.h stat.h stdarg.h stdio.h stdlib.h string.h time.h types.h
+

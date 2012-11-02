@@ -1,0 +1,7 @@
+system dos4g option quiet debug all 
+file .\obj\ifftestv.obj
+library .\iff.lib,
+ h:\miner\source\lib\vesa.lib,
+ h:\miner\source\lib\cflib.lib,
+ h:\miner\source\lib\cfile.lib
+name .\ifftestv

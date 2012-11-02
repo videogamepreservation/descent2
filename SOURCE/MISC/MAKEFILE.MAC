@@ -1,0 +1,31 @@
+#
+# $Source: f:/miner/source/misc/rcs/makefile $
+# $Revision: 1.6 $
+# $Author: matt $
+# $Date: 1995/08/17 11:33:02 $
+#
+# Makefile for misc libaray
+#
+
+# What to install
+INSTALL_TARGS = parsarg.h error.h debug.h hash.h args.h byteswap.h strutil.h fileutil.h misc.lib
+
+# What libs to build
+LIBS = misc
+
+# What objs in the lib
+MISC_OBJS = error.obj hash.obj args.obj byteswap.obj strutil.obj fileutil.obj
+
+# What to clean
+CLEAN_TARGS = $(OBJDIR):*.obj
+
+# What test programs to make
+TEST_PROGS =
+
+# What object files and libs for the test programs
+
+#rules and targets common to all Miner makefiles
+.INCLUDE : "BigRed:miner2:init:makefile.def"
+
+### OPUS MKMF:  Do not remove this line!  Generated dependencies follow.
+

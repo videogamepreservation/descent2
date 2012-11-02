@@ -1,0 +1,28 @@
+void mem_free( void * buffer )
+{
+	int ErrorCount;
+	int * psize = (int *)buffer;
+	psize--;
+
+	if (Initialized==0)
+		mem_init();
+
+	if (buffer==NULL)	{
+		fprintf( stderr, "\nMEM_FREE_NULL: An attempt was made to free the null pointer.\n" );
+		Warning( "MEM: Freeing the NULL pointer!" );
+		Int3();
+		return;
+	}
+
+	ErrorCount = 0;
+
+	if (ErrorCount)	{
+		fprintf( stderr, "\nMEM_OVERWRITE: Memory after the end of allocated block overwritten.\n" );
+		fprintf( stderr, "\tBlock at 0x%x, size %d\n", buffer, *psize );
+		fprintf( stderr, "\t%d/%d check bytes were overwritten.\n", ErrorCount, CHECKSIZE );
+	}
+
+	BytesMalloced -= *psize;
+
+	free( buffer );
+}

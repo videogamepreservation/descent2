@@ -1,0 +1,87 @@
+Microsoft (R) Macro Assembler Version 6.00B 		    08/24/93 12:17:59
+test.asm						     Page 1 - 1
+
+
+				;
+				; $Source: $
+				; $Revision: $
+				; $Author: $
+				; $Date: $
+				;
+				; Sample assembly-language setup
+				;
+				; $Log: $
+				;
+				;
+
+				.386
+					option	oldstructs
+
+					.nolist
+					.list
+
+					assume	cs:_TEXT, ds:_DATA
+
+ 0000				_DATA	segment	dword public USE32 'DATA'
+
+ 0000 24 49 64 3A 20 24		rcsid	db	"$Id: $"
+
+ 0006				_DATA	ends
+
+
+
+ 0000				_TEXT	segment	dword public USE32 'CODE'
+
+ = 0030					a = OPATTR(ebx)
+ = 0022					b = OPATTR(rcsid[ebx])
+
+ 0000				_TEXT	ends
+
+					end
+Microsoft (R) Macro Assembler Version 6.00B 		    08/24/93 12:17:59
+test.asm						     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+@ArgCount  . . . . . . . . . . .	Func
+@ArgRev  . . . . . . . . . . . .	Func
+dbstr  . . . . . . . . . . . . .	Proc
+debug_at . . . . . . . . . . . .	Proc
+debug  . . . . . . . . . . . . .	Proc
+extb . . . . . . . . . . . . . .	Proc
+extdef . . . . . . . . . . . . .	Proc
+extd . . . . . . . . . . . . . .	Proc
+extgen . . . . . . . . . . . . .	Proc
+extn . . . . . . . . . . . . . .	Proc
+extw . . . . . . . . . . . . . .	Proc
+mprintf_at . . . . . . . . . . .	Proc
+mprintf  . . . . . . . . . . . .	Proc
+popm . . . . . . . . . . . . . .	Proc
+pushlong . . . . . . . . . . . .	Proc
+pushml . . . . . . . . . . . . .	Proc
+pushm  . . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+_DATA  . . . . . . . . . . . . .	32 Bit	 0006	  DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000	  DWord	  Public  'CODE'	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+a  . . . . . . . . . . . . . . .	Number	 0030h	 
+b  . . . . . . . . . . . . . . .	Number	 0022h	 
+rcsid  . . . . . . . . . . . . .	Byte	 0000	  _DATA	
+
+	   0 Warnings
+	   0 Errors

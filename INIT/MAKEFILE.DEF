@@ -1,0 +1,999 @@
+#
+# $Source: f:/miner/init/RCS/makefile.def $
+# $Revision: 1.98 $
+# $Author: matt $
+# $Date: 1996/12/04 18:29:50 $
+#
+# Common makefile targets and rules for Miner
+#
+# This file should be included by all Miner makefiles 
+#
+# $Log: makefile.def $
+# Revision 1.98  1996/12/04  18:29:50  matt
+# Added support for keeping 3rd-party libraries in their own directories,
+# instead of in the normal lib directory.
+# 
+# Revision 1.97  1996/12/04  15:16:50  matt
+# Added (commented-out) flags for newer DOS4GW
+# 
+# Revision 1.96  1996/08/27  10:59:50  matt
+# Added support for causeway dos extender
+# 
+# Revision 1.95  1996/07/19  14:37:59  matt
+# Fixed a couple small things
+# 
+# Revision 1.94  1996/07/03  18:43:49  matt
+# Added support for win subdir of lib directory
+# 
+# Revision 1.93  1996/07/03  18:04:11  matt
+# Look in \miner\source\lib\win before looking in \miner\source\lib
+# 
+# Revision 1.92  1996/06/17  16:30:02  samir
+# Added DLL make capabilities for NT/95
+# 
+# Revision 1.91  1996/06/11  14:49:20  samir
+# Win95: eliminated switch that allowed compat libs with 10.0. 
+# (otherwise can't link in new Windows 95 API funcs)
+# 
+# Revision 1.90  1996/06/07  15:26:30  samir
+# under watcom 10.6, use win95 system
+# 
+# Revision 1.89  1996/05/23  18:10:36  matt
+# Fixed no_mono target, which broke no_debug if listed after it
+# 
+# Revision 1.88  1996/05/23  18:09:01  matt
+# Added option to make bound version that doesn't force VM usage
+# 
+# Revision 1.87  1996/01/31  22:22:51  matt
+# Default Cflags always had stack check disabled, do turning on stack
+# checking didn't do anything.
+# 
+# Revision 1.86  1996/01/29  11:37:15  matt
+# Put in support for TurboC
+# 
+# Revision 1.85  1995/12/06  15:55:59  matt
+# Added option to disable optimized builds in a makefile
+# 
+# Revision 1.84  1995/10/26  18:18:22  samir
+# Made all windows libraries and headers for Descent in 
+# minerlocal\source\lib\win
+# 
+# Revision 1.83  1995/10/24  14:21:49  samir
+# Took out WIN32_LEAN_AND_MEAN.
+# 
+# Revision 1.82  1995/10/02  11:11:32  matt
+# Changed addpath parms to pass path relative to current drive
+# 
+# Revision 1.81  1995/09/01  11:59:28  samir
+# Added lean and mean Win32.
+# 
+# Revision 1.80  1995/08/14  17:52:13  matt
+# Allow asm includes to be upper- or lower-case
+# 
+# Revision 1.79  1995/08/14  17:22:25  matt
+# Changed some stuff for Windows
+# 
+# Revision 1.78  1995/05/24  16:47:37  matt
+# Added support for building win32 programs
+# 
+# Revision 1.77  1995/05/24  12:31:15  matt
+# Allowed DOS4GPATH to either specify path+filename, or just path
+# 
+# Revision 1.76  1995/04/19  12:09:49  matt
+# Added support for Symantec C compiler
+# 
+# Revision 1.75  1995/04/06  18:24:49  matt
+# Added option to disable 'update' target
+# 
+# Revision 1.74  1995/04/06  18:20:44  matt
+# Added stuff (several weeks ago) for building windows executable
+# 
+# Revision 1.73  1995/02/06  22:58:40  matt
+# Allow multiple 'clean:' targets
+# 
+# Revision 1.72  1995/01/18  18:02:15  matt
+# Added support for TASM (instead of MASM)
+# 
+# Revision 1.71  1994/12/09  18:49:41  matt
+# Added no_mono option
+# 
+# Revision 1.70  1994/12/06  18:36:00  matt
+# Added global_aflags
+# 
+# Revision 1.69  1994/11/27  20:12:09  matt
+# Made case of install targ extensions insignificant
+# 
+# Revision 1.68  1994/11/21  13:56:26  matt
+# Bound version now prints dos4gw banner
+# 
+# Revision 1.67  1994/11/21  13:55:57  matt
+# Let subsystems have multiple targets
+# 
+# Revision 1.66  1994/10/28  10:58:30  matt
+# Made bound version turn virtual mem on, and banner off
+# 
+# Revision 1.65  1994/10/27  19:24:49  matt
+# Changed optimization & stack options (change actually made 8-26-94)
+# 
+# Revision 1.64  1994/08/12  20:59:46  matt
+# Made 'make <prog>' work again, when <prog> is the name without an extension.
+# Make 'install' exit with error if any target got an rcs warning.
+# 
+# Revision 1.63  1994/07/19  15:07:20  mike
+# Cause "make optimize" to optimize for Pentium with /5r option.
+# (default is, and previous was, /4r)
+# 
+# Revision 1.62  1994/07/19  14:15:33  mike
+# Add /5r option to optimize5
+# 
+# Revision 1.61  1994/06/14  11:18:25  matt
+# Added support for cflags global to makefile
+# 
+# Revision 1.60  1994/05/02  15:49:14  matt
+# Added target 'bind' which creates *.bnd files for all exes
+# 
+# Revision 1.59  1994/04/22  13:13:42  matt
+# Added list of sources that always is built optimized
+# Removed move of log headers
+# 
+# Revision 1.58  1994/04/01  11:42:51  matt
+# Added flags for assembly, and when NDEBUG is set, use /d
+# 
+
+# Set these to reasonable values
+.REGEX_CHAR: ~
+.REGEX_WILD: ?
+
+# Kill annoying built-in rules
+.REJECT_RULES:
+
+# Check for local miner directory
+%ifndef MINERLOCAL
+MINERLOCAL = MINER
+%endif
+
+# Directory definitions
+LIBDIRNET = $(MINER)\source\lib
+LIBDIRLOCAL = $(MINERLOCAL)\source\lib
+TOOLSDIR = $(MINER)\tools
+GAMEDIR = $(MINER)\game
+
+# Where to install libraries
+%ifdef LIB_SUBDIR
+LIBDIRNET_INST = $(LIBDIRNET)\$(LIB_SUBDIR)
+LIBDIRLOCAL_INST = $(LIBDIRLOCAL)\$(LIB_SUBDIR)
+%else
+LIBDIRNET_INST = $(LIBDIRNET)
+LIBDIRLOCAL_INST = $(LIBDIRLOCAL)
+%endif
+
+# Always use current directory   
+ALLDIRS = .
+
+# Say what the optimize flags are
+OPT_FLAGS =/ox /oe /ot
+
+%ifndef MKMF	#skip this stuff to avoid MKMF warning
+
+# Get lists of subdirs, & object files for them
+%foreach _PROG $(TEST_PROGS) $(PROGS)
+
+PROG = $(_PROG,B)
+
+# If no dest, set dest to be current dir
+%if "$($(PROG)_DEST)" == ""
+%set $(PROG)_DEST = .
+%endif
+
+# If no _SRCS macro exists, warn the user, but create if from _OBJS macro
+%ifndef $(PROG)_SRCS
+%echo Warning: should convert $(PROG,UC)_OBJS to $(PROG,UC)_SRCS
+$(PROG)_SRCS := $($(PROG)_OBJS,B,>.c)
+%endif
+
+# Get the exe path 
+%ifdef $(PROG)_OBJS
+%undef $(PROG)_OBJS
+%endif
+$(PROG)_OBJS := $($(PROG)_SRCS,B,>.obj) $($(PROG)_SRCS_OPT,B,>.obj)
+
+# Set opt flags for opt sources
+%foreach _SRC $($(PROG)_SRCS_OPT)
+$(_SRC)_CFLAGS = $(OPT_FLAGS)
+%endfor #srcs
+
+# Get the data
+
+%if '$($(PROG)_DIRS,W)' != ''
+%foreach SUBDIR $($(PROG)_DIRS)
+
+# If no _SRCS macro exists, warn the user, but create if from _OBJS macro
+%ifndef $(SUBDIR)_SRCS
+%echo Warning: should convert $(SUBDIR,UC)_OBJS to $(SUBDIR,UC)_SRCS
+$(SUBDIR)_SRCS := $($(SUBDIR)_OBJS,B,>.c)
+%endif
+
+##$(PROG)_OBJS += $($(SUBDIR)_SRCS,B,>.obj)
+$(PROG)_OBJS := $($(PROG)_OBJS) $($(SUBDIR)_SRCS,B,>.obj) $($(SUBDIR)_SRCS_OPT,B,>.obj)
+
+ALLDIRS += $(SUBDIR)
+
+# Set opt flags for opt sources
+%foreach _SRC $($(SUBDIR)_SRCS_OPT)
+$(_SRC)_CFLAGS = $(OPT_FLAGS)
+%endfor #srcs
+
+# Make rules for getting right source for objects in subdirs
+%foreach _SRC $($(SUBDIR)_SRCS) $($(SUBDIR)_SRCS_OPT)
+$(_SRC,B,>.obj) .NODEFAULT: $(SUBDIR)\$(_SRC)
+%endfor #srcs
+
+%endfor	#subdir
+%endif	#subdirs
+
+%endfor	#prog
+
+%endif
+
+%foreach _DIR $(ALLDIRS)
+
+# Find RCS directory
+RCSNAME = $(_DIR)\rcs.rc
+%if %exists($(RCSNAME))
+RCSDIR := $(RCSNAME,@,Mrcsdir\=,1,S/rcsdir\=~(?*~)/~1/)
+# Rule to check if files are up to date
+%if '$(_DIR)' == '.'
+%: $(RCSDIR)\RCS\%
+	%ifdef UPDATE_ON
+	  %do rcs_checkout
+	%else
+	  %do rcs_warn
+	%endif
+
+# we need these rules because we want the makefile to find the file in RCS 
+# (if it exists) before it finds it in the library directory
+%.h: $(RCSDIR)\RCS\%.h
+	%ifdef UPDATE_ON
+	  %do rcs_checkout
+	%else
+	  %do rcs_warn
+	%endif
+
+%.inc: $(RCSDIR)\RCS\%.inc
+	%ifdef UPDATE_ON
+	  %do rcs_checkout
+	%else
+	  %do rcs_warn
+	%endif
+
+
+%else
+$(_DIR)\%: $(RCSDIR)\RCS\%
+	%ifdef UPDATE_ON
+	  %do rcs_checkout
+	%else
+	  %do rcs_warn
+	%endif
+
+#endif
+
+%endif
+%endif
+
+%endfor
+
+#we want ot do a reread here so make doesn't think the target has
+#been updated, when really we've just printed a warning.
+rcs_warn .PHONY .NODEFAULT .REREAD:
+	%if ! %exists($@)
+	  @%error 1 Error: $@ missing, needs to be checked out
+	%else
+	  @=echo Warning: $@ older than RCS version
+	  @%set WARNINGS_FLAG = 1
+	%endif
+
+rcs_checkout .PHONY .NODEFAULT:
+	%if '$(@,D)' == '.'
+	  co -q $@
+	  %if '$(@,UC)' == '$(MAKEFILE,UC)'
+	    %restart  #want to use the right makefile
+	  %endif
+	%else
+	  (cd $(@,D); co -q $(@,F))
+	%endif
+
+# Rule to check local libraries vs. network copies
+$(LIBDIRLOCAL)\% .REREAD: $(LIBDIRNET)\%
+	%do net_update
+
+# Rule to find header files from net dir, if missing locally
+%.h .REREAD: $(LIBDIRNET)\%.h
+	%do net_update
+
+# Rule to find header files from net dir, if missing locally
+%.inc .REREAD: $(LIBDIRNET)\%.inc
+	%do net_update
+
+%if "$(TARGSYS)" == "WIN32"
+# Rule to check local libraries vs. network copies
+$(LIBDIRLOCAL)\win\% .REREAD: $(LIBDIRNET)\win\%
+	%do net_update
+%endif
+
+# Get new version from net
+net_update .PHONY .NODEFAULT:
+	%if '$(INSTALL_TARGS,F,M$(@,F))' == ''	#not an install targ
+	  %if %exists($(@,F)) && ('$(@,D)' == '' || '$(@,D)' == '.')
+	    @echo Warning: found local copy of library file $@
+	  %endif
+	  %if "$(@,D)" == "."
+	    @%set __DEST = $(LIBDIRLOCAL)
+	  %else
+	    @%set __DEST = $(@,D)
+	  %endif
+	  %ifdef UPDATE_ON
+	    @echo Updating $(@,F) from $(<,D)
+	    ##@copy $< $(LIBDIRLOCAL) >nul
+	    ##@touch $(LIBDIRLOCAL)\$(@,F)
+	    @copy $< $(__DEST) >nul
+	    @touch $(__DEST)\$(@,F)
+	  %else
+	    %if ! %exists($@)
+	      @%error 1 Error: $@ missing, needs to be copied from net
+	    %else
+	      @echo Warning: $@ older than network version
+	    %endif
+	  %endif
+	%endif
+
+# What extensions get installed where
+LIBEXT = .lib .h .inc
+TOOLSEXT = .exe
+
+# Set object file directory if not already set
+OBJDIR ?= .\obj
+
+# Set system if not already set
+TARGSYS ?= DOS4G
+
+# Make sure uppercase
+TARGSYS := $(TARGSYS,UC)
+
+# Set make's search paths
+.PATH.obj = $(OBJDIR,W;)
+.PATH.h = $(INCPATH,W;);$(ALLDIRS,W;)
+.PATH.inc = $(INCPATH,W;);$(ALLDIRS,W;)
+
+%if $(TARGSYS) == "WIN32"
+.PATH.LIB = .;$(LIBDIRLOCAL)\win;$(LIBDIRLOCAL);$(EXTLIBS,W;)
+%else
+.PATH.LIB = .;$(LIBDIRLOCAL);$(EXTLIBS,W;)
+%endif
+
+.HDRPATH.c = $(INCPATH) $(ALLDIRS) 
+.HDRPATH.h = $(INCPATH) $(ALLDIRS) 
+.HDRPATH.asm = $(INCPATH) $(ALLDIRS)
+.HDRPATH.inc = $(INCPATH) $(ALLDIRS)
+
+
+#.PATH.c = $(ALLDIRS,W;)
+#.PATH.asm = $(ALLDIRS,W;)
+
+%ifdef MKMF
+%include $(MAKEDIR)\_mkmf.tmp
+%endif
+
+# Make sure there aren't weird extensions on targets
+%foreach TARG $(DLLS)
+%if ("$(TARG,E)" != "" && "$(TARG,E,UC)" != ".DLL")
+%error 1 Makefile error: invalid extension on DLL target $(TARG,UC)
+%endif
+%endfor
+
+%foreach TARG $(LIBS)
+%if ("$(TARG,E)" != "" && "$(TARG,E,UC)" != ".LIB")
+%error 1 Makefile error: invalid extension on LIB target $(TARG,UC)
+%endif
+%endfor
+ 
+%foreach TARG $(TEST_PROGS) $(PROGS)
+%if ("$(TARG,E)" != "" && "$(TARG,E,UC)" != ".EXE")
+%error 1 Makefile error: invalid extension on program target $(TARG,UC)
+%endif
+%endfor
+
+# Now that we know the extensions are OK, strip them off
+DLLS := $(DLLS,B)
+LIBS := $(LIBS,B)
+TEST_PROGS := $(TEST_PROGS,B)
+PROGS := $(PROGS,R)
+
+# Generate lists of targets with extentions 
+DLL_DLLS = $(DLLS,<.\\,>.dll)
+TEST_EXES = $(TEST_PROGS,<.\\,>.exe)
+LIB_LIBS = $(LIBS,<.\\,>.lib)
+##PROG_EXES = $(PROGS,>.exe)
+
+# Make list of prog exe names, prepending current director as path if none
+%foreach PROG $(PROGS)
+%if "$(PROG,P)" == ""
+%set PROG_EXES := $(PROG_EXES) .\$(PROG).exe
+%else
+%set PROG_EXES := $(PROG_EXES) $(PROG).exe
+%endif
+
+%endfor
+
+ALL_EXES = $(TEST_EXES) $(PROG_EXES)
+
+# Default target if none specified in makefile
+all .PHONY:	$(DLL_DLLS) $(LIB_LIBS) $(PROG_EXES)
+	%do do_subsystems SUBTARG="$(SUBTARGETS)"
+
+# Target like all that also builds test progs
+test .PHONY:	$(DLL_DLLS) $(LIB_LIBS) $(PROG_EXES) $(TEST_EXES)
+	%do do_subsystems SUBTARG=$(SUBTARGETS)
+
+# Target to make data
+data .PHONY:	
+
+BOUND_EXES = $(ALL_EXES,R).BND
+
+BIND_FLAGS = -f
+#BIND_FLAGS = -VMON
+
+# Rule for bound exes
+$(BOUND_EXES): 	$(*,R).EXE
+	@%ifndef DOS4GPATH
+	  @%error 1 Make error: DOS4GPATH env var not defined (run WATCOM batch file)
+	@%endif
+	@%echo Binding $(<,F,UC) to $(@,F,UC)
+	#if DOS4GPATH is full filename, use it, else us it as just path
+	@%if "$(DOS4GPATH,E,UC)" == ".EXE"
+	  4gwbind $(dos4gpath) $(<) $(@) $(BIND_FLAGS)
+	@%else
+	  4gwbind $(dos4gpath)\4gwpro.exe $(<) $(@) $(BIND_FLAGS)
+	@%endif
+
+# Target to bind executables.  Binds all exes
+bind .PHONY:	$(BOUND_EXES)
+	
+# Target to disable virtual memory on bound executables
+novm .PHONY:
+	  @%set BIND_FLAGS=-v
+	  #@%set BIND_FLAGS=-VMDEL
+
+# Allow the user to say 'make prog' with the name but not the extension
+$(TEST_PROGS) .PHONY: .\$*.exe
+
+##$(PROGS) .PHONY: .\$*.exe
+
+$(PROGS,F) .PHONY: $($(*,F)_DEST)\$@.exe
+
+# Allow the user to say 'make lib' or 'make dll' with the name but not the extension
+$(DLLS) .PHONY: .\$*.dll
+$(LIBS) .PHONY: .\$*.lib
+
+# Compiler and assembler defines
+
+%if ("$(COMPILER,LC)"=="WATCOM") || ("$(COMPILER)"=="")
+
+# Make sure we're set up for Watcom C
+%ifndef WATCOM
+%error 1 Make error: Watcom not set up (run WATCOM batch file)
+%endif
+
+%if $(TARGSYS) == "WIN32"
+INCPATH += . $(LIBDIRLOCAL)\win $(LIBDIRLOCAL) $(EXTLIBS) $(WATCOM)\h $(WATCOM)\h\sys $(WATCOM)\h\nt
+%else
+INCPATH += . $(LIBDIRLOCAL) $(EXTLIBS) $(WATCOM)\h $(WATCOM)\h\sys
+%endif
+
+CC = wcc386
+CCENV = wcc386
+CFLAGS_STACK = /s	#default is stack checking off
+CFLAGS = /zq /zld /w3 /on /oa $(INCPATH,</I\=) $(CFLAGS_DEBUG) $(CFLAGS_OPT) $(GLOBAL_CFLAGS) $(CFLAGS_STACK) $(CFLAGS_MONO)
+
+%ifdef GLOBAL_INCFILES
+CFLAGS += /fi=$(GLOBAL_INCFILES)
+%endif
+
+LIBEXE = wlib
+LINK = wlink
+
+%if $(TARGSYS) == "WIN32"
+%if '$(DLL_DLLS)' != ''
+CFLAGS += /bd /bt=nt /w2
+%else
+CFLAGS += /bt=nt /w2 
+%endif
+%endif
+
+%elseif "$(COMPILER,LC)"=="SYMANTEC"
+
+# Make sure we're set up for Symantec C
+%ifndef SC
+%error 1 Make error: Symantec not set up (run SYMANTEC batch file)
+%endif
+
+INCPATH += . $(LIBDIRLOCAL) $(EXTLIBS) $(SC)\include $(SC)\include\sys
+
+CC = sccx
+CCENV = 
+CFLAGS_STACK = 
+CFLAGS = -5 -mx $(INCPATH,<-I) $(CFLAGS_DEBUG) $(CFLAGS_OPT) $(GLOBAL_CFLAGS) $(CFLAGS_STACK) -o$(@,F,X) 
+
+%ifdef GLOBAL_INCFILES
+CFLAGS += /HI$(GLOBAL_INCFILES)
+%endif
+
+LIBEXE = lib
+LINK = link
+
+%elseif "$(COMPILER,LC)"=="TURBOC"
+
+# Make sure we're set up for Turbo C
+%ifndef TURBOC
+%error 1 Make error: TurboC not set up (run TURBO batch file)
+%endif
+
+INCPATH += . $(LIBDIRLOCAL) $(EXTLIBS) $(TURBOC)\include $(TURBOC)\include\sys
+
+CC = tcc
+CCENV = 
+CFLAGS_STACK = 
+CFLAGS = $(INCPATH,<-I) $(CFLAGS_DEBUG) $(CFLAGS_OPT) $(GLOBAL_CFLAGS) $(CFLAGS_STACK) $(CFLAGS_MONO) -o$(@,F,X) 
+
+%ifdef GLOBAL_INCFILES
+CFLAGS += /HI$(GLOBAL_INCFILES)
+%endif
+
+LIBEXE = lib
+LINK = tlink
+
+%endif
+
+%if ("$(ASSEMBLER,LC)"=="masm") || ("$(ASSEMBLER)"=="")
+
+# Flags for MASM 6.1
+AS = ml
+AFLAGS = /c /W3 /Zd /nologo $(INCPATH,</I) $(AFLAGS_DEBUG) $(GLOBAL_AFLAGS) /Fo$(@,F,X)
+ASENV = ml
+
+%elseif "$(ASSEMBLER,LC)"=="tasm"
+
+# Flags for TASM 3.1
+AS = tasm
+AFLAGS = ,$(@,F,X) -t $(GLOBAL_AFLAGS) 
+
+%else
+%error 1 Make error: Unknown assembler: $(ASSEMBLER)
+%endif
+
+%if $(TARGSYS) == "WIN32"
+LFLAGS = system win95
+%elseif $(TARGSYS) == "DOS4G"
+LFLAGS = system dos4g
+%elseif $(TARGSYS) == "CAUSEWAY"
+LFLAGS = system causeway
+%elseif
+%error Make settings error: Undefined target system <$(TARGSYS)>
+%endif
+
+%if '$(DLL_DLLS)' != ''
+LFLAGS += dll
+%endif
+
+LFLAGS += option quiet $(LFLAGS_DEBUG)
+
+# Phony targets to set options
+optimize .PHONY:
+	%ifndef OPTIMIZE_DISABLED
+	  @%set CFLAGS_OPT=$(OPT_FLAGS) /5r
+	%endif
+
+no_optimize .PHONY:
+	@%set CFLAGS_OPT=
+
+debug .PHONY:
+	%if ("$(COMPILER,LC)"=="WATCOM") || ("$(COMPILER)"=="")
+	  @%set AFLAGS_DEBUG=
+	  @%set CFLAGS_DEBUG=/d2
+	  @%set LFLAGS_DEBUG=debug all
+	%elseif "$(COMPILER,LC)"=="SYMANTEC"
+	  @%set AFLAGS_DEBUG=
+	  @%set CFLAGS_DEBUG=-g
+	  @%set LFLAGS_DEBUG=DEBUG
+	%endif
+
+
+no_debug .PHONY:
+	@%set CFLAGS_DEBUG=/dNDEBUG
+	@%set AFLAGS_DEBUG=/DNDEBUG
+	@%set LFLAGS_DEBUG=
+
+no_mono .PHONY:
+	@%set CFLAGS_MONO=/dNMONO
+	@%set AFLAGS_MONO=/DNMONO
+
+stack_check .PHONY:
+	@%set CFLAGS_STACK=		#turn off stack check disable
+
+update .PHONY:
+	%ifdef UPDATE_NOT_ALLOWED
+	  @%error 1 Error: UPDATE not allowed in this makefile
+	%else
+	  @%set UPDATE_ON=1
+	%endif
+
+no_update .PHONY:
+	@%undef UPDATE_ON
+
+source .PHONY: set_no_build all
+
+
+set_no_build .PHONY:
+	@%set NO_BUILD=1
+
+
+# Set optional compiler flags
+
+%ifdef DEBUG_ON
+.BEFORE::
+	%do debug
+%endif
+
+%ifdef OPTIMIZE_ON
+.BEFORE::
+	%do optimize
+%endif
+
+%ifdef STACK_CHECK_ON
+.BEFORE::
+	%do stack_check
+%endif
+
+# Inference rules
+%.obj: %.c
+	%ifdef NO_BUILD
+	  %if %exists($(OBJDIR))
+	    @del $(OBJDIR)\$(@:F)
+	  %endif
+	%else
+	  %if ! %exists($(OBJDIR))
+	    md $(OBJDIR)
+	  %endif
+	  %ifdef SHOW_REASONS
+	    %if ! %exists($@)
+	      @echo   $(@,F) \<- (does not exist)
+	    %else
+	      @echo   $(@,F) \<- $(?,F)
+	    %endif
+	  %endif
+	  %if "$(CCENV)" != ""
+	    @%setenv $(CCENV,UC)=$(CFLAGS) $($T_CFLAGS) $($(<,f)_CFLAGS) /fo=$(@,F,X)
+	    %ifdef SHOW_FLAGS
+	      @%echo $(CC) flags: $($(CCENV))
+	    %endif
+	    $(CC) $(<)
+	  %else
+	    $(CC) $(CFLAGS) $($T_CFLAGS) $($(<,f)_CFLAGS) $<
+	  %endif
+	  ##%if '$(<:D)'=='.'
+	    ##@addpath $(OBJDIR)\$(@:F) $(CWD:S/H:/F:\home\$(USER)/)\$<
+	    @addpath $(OBJDIR)\$(@:F) $(<:A,S/$(<:Z)//)
+	  ##%endif
+	%endif
+
+%.obj: %.asm
+	%ifdef NO_BUILD
+	  %if %exists($(OBJDIR))
+	    @del $(OBJDIR)\$(@:F)
+	  %endif
+	%else
+	  %if ! %exists($(OBJDIR))
+	    md $(OBJDIR)
+	  %endif
+	  %ifdef SHOW_REASONS
+	    %if ! %exists($@)
+	      @echo   $(@,F) \<- (does not exist)
+	    %else
+	      @echo   $(@,F) \<- $(?,F)
+	    %endif
+	  %endif
+ 	  @%set __AFLAGS = $(AFLAGS) $($(@,F)_AFLAGS) 
+	  %if "$(ASENV)" != ""
+	    @%setenv $(ASENV,UC)=$(__AFLAGS)
+	    @%set __AFLAGS = 
+	  %endif
+	  %ifdef SHOW_FLAGS
+	    @%echo $(AS) flags: $($(__AFLAGS))
+	  %endif
+	  $(AS) $(*,F).asm $(__AFLAGS)
+	  ##%if '$(<:D)'=='.'
+	    ##@addpath $(OBJDIR)\$(@:F) $(CWD:S/H:/F:\home\$(USER)/)\$<
+	    @addpath $(OBJDIR)\$(@:F) $(<:A,S/$(<:Z)//)
+	  ##%endif
+	%endif
+
+# Response files and env vars
+.RESPONSE.WLINK: pre=@ suf=.lnk sep=/ in=50 wlinkp
+.RESPONSE.WLIB: pre=@ suf=.arg in=50 wlib
+
+# This is used to set a variable to the name of the main target
+TARGNAMES = $(DLLS,>.TARGNAME) $(LIBS,>.TARGNAME) $(TEST_PROGS,>.TARGNAME) $(PROGS,B,>.TARGNAME)
+
+%ifndef MKMF	#skip this stuff to avoid MKMF warning
+
+# Check list of libs for test programs, and if any lib is a lib target,
+# explicitely use the local library
+%foreach PROG $(TEST_PROGS) $(PROGS)
+_TEMP=
+%foreach PLIB $($(PROG)_LIBS)
+%set _LOCAL=0
+%foreach LIB $(LIBS)
+%if '$(PLIB)'=='$(LIB).lib'
+%set PLIB :=.\$(PLIB)
+%set _LOCAL=1
+%endif
+%endfor
+%if $(_LOCAL) == 0
+%set PLIB := $(LIBDIRLOCAL)\$(PLIB)
+%endif
+_TEMP += $(PLIB)
+%endfor
+%set $(PROG)_LIBS :=$(_TEMP)
+%endfor
+
+%endif  #MKMF
+
+# Build test programs
+%if '$(ALL_EXES,W)' != ''
+$(ALL_EXES):	$(MAKEFILE) $(*,F).TARGNAME $($(*,F)_OBJS) $($(*,F)_LIBS) $($(*,F)_DATA) 
+	%if "$($(*,F)_OBJS)"==""
+	  @%error 1 Makefile error: no object files given for test program $(*,F,UC)
+	%else
+	  %ifndef NO_BUILD
+	    %ifdef SHOW_REASONS
+	      %if ! %exists($@)
+	        @echo   $(@,F) \<- (does not exist)
+	      %else
+	        @echo   $(@,F) \<- $(?,F)
+	      %endif
+	    %endif
+	    $(LINK) @<<$(*,F).lnk
+$(LFLAGS) $($(*,F)_LFLAGS) 
+file $($(*,F)_OBJS,X,W\,\n )
+%if "$($(*,F)_LIBS)"!=""
+library $($(*,F)_LIBS,X,W\,\n ) 
+%endif
+name $(*,R)
+<< KEEP
+	    %if $(TARGSYS) == "WIN386"
+	      wbind $(*,R) -n
+	    %endif
+	  %endif
+	%endif
+%endif
+
+# Set a variable to the name main target (the exe) being built
+%if '$(TARGNAMES,W)' != ''
+$(TARGNAMES) .PHONY:
+        @%set T=$(*,F)
+%endif
+ 
+
+# Build DLLS
+%if $(TARGSYS) == "WIN32"
+%if '$(DLL_DLLS)' != ''
+	$(DLL_DLLS):	$(MAKEFILE) $(*,F).TARGNAME $($(*,F)_OBJS)
+	%if "$($(*,F)_OBJS)" == ""
+	  @%error 1 Makefile error: no object files given for DLL $(*,F,UC)
+	%endif
+	%ifdef SHOW_REASONS
+	  %if ! %exists($@)
+	    @echo   $(@,F) \<- (does not exist)
+	  %else
+	    @echo   $(@,F) \<- $(?,F)
+	  %endif
+	%endif
+	
+	$(LINK) @<<$(*,F).lnk
+	$(LFLAGS) $($(*,F)_LFLAGS) 
+	file $($(*,F)_OBJS,X,W\,\n )
+	%if "$($(*,F)_LIBS)"!=""
+	library $($(*,F)_LIBS,X,W\,\n ) 
+	%endif
+	name $(*,R)
+%endif
+%endif
+
+
+# Build libraries
+%if '$(LIB_LIBS)' != ''
+$(LIB_LIBS):	$(MAKEFILE) $(*,F).TARGNAME $($(*,F)_OBJS)
+	%if "$($(*,F)_OBJS)" == ""
+	  @%error 1 Makefile error: no object files given for library $(*,F,UC)
+	%endif
+	%ifdef SHOW_REASONS
+	  %if ! %exists($@)
+	    @echo   $(@,F) \<- (does not exist)
+	  %else
+	    @echo   $(@,F) \<- $(?,F)
+	  %endif
+	%endif
+	$(LIBEXE) /q /n /b $* $($(*,F)_OBJS,X)
+%endif
+
+# Visit subdirs and make there
+do_subsystems .PHONY:
+	%foreach SYSTEM $(SUBSYSTEMS)
+	  (cd $(SYSTEM); $(MAKE) $(MFLAGS) $(SUBTARG))
+	%endfor
+
+# Generate dependencies
+depend .PHONY:
+	%do do_subsystems SUBTARG=$@
+	%echo .HDRPATH.c = $(.HDRPATH.c) >$(MAKEDIR)\_mkmf.tmp
+	%echo .HDRPATH.h = $(.HDRPATH.h) >>$(MAKEDIR)\_mkmf.tmp
+	%echo .HDRPATH.asm = $(.HDRPATH.asm) >>$(MAKEDIR)\_mkmf.tmp
+	%echo .HDRPATH.inc = $(.HDRPATH.inc) >>$(MAKEDIR)\_mkmf.tmp
+	%echo .HDR.asm=^[ ~t]*[iI][nN][cC][lL][uU][dD][eE][ ~t]+~([^ ~t]+~) >>$(MAKEDIR)\_mkmf.tmp
+	@mkmf -dS ALLDIRS=$(ALLDIRS,W;) .PATH.h=$(.PATH.h,W;) .PATH.inc=$(.PATH.inc,W;) $(ALLDIRS,>\*.c) $(ALLDIRS,>\*.asm)
+	@del $(MAKEDIR)\_mkmf.tmp
+
+# Clean up temp & intermediary files
+
+CLEAN_TARGS := $(CLEAN_TARGS) $(OBJDIR)\*.obj $(TEST_EXES) $(PROG_EXES) $(LIB_LIBS) $(DLL_DLLS)
+
+clean .PHONY::
+	%do do_subsystems SUBTARG=$@
+	%foreach CLTARG $(CLEAN_TARGS)
+	  %if %exists($(CLTARG))
+	    del $(CLTARG)
+	  %endif
+	%endfor
+
+# Copy libs and other files to their install directory
+install .PHONY:	$(INSTALL_TARGS,<.\)
+	%ifdef WARNINGS_FLAG
+	  %ifndef INSTALL_ANYWAY
+	    @%error 1 Error: Must fix RCS warnings before installing
+	  %endif
+	%endif
+
+	%foreach TARG $(INSTALL_TARGS)
+
+	  #figure out where to install to
+	  %if "$(TARG,E)"==""
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %elseif "$(LIBEXT,UC,M$(TARG,E,UC))"!=""
+	    @%set INST_DIRS=$(LIBDIRNET_INST) $(LIBDIRLOCAL_INST)
+	  %elseif "$(TOOLSEXT,UC,M$(TARG,E,UC))"!=""
+	    @%set INST_DIRS=$(TOOLSDIR)
+	  %else
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %endif
+
+	  #do the copy, comparing first if targ is a header file
+	  %if ($(TARG,E)==".h") || ($(TARG,E)==".inc")
+	    %do inst_copy_if
+	  %else
+	    %do inst_copy
+	  %endif
+
+	%endfor
+
+# Local install
+linstall .PHONY:	$(INSTALL_TARGS,<.\)
+	%foreach TARG $(INSTALL_TARGS)
+
+	  #figure out where to install to
+	  %if "$(TARG,E)"==""
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %elseif "$(LIBEXT,UC,M$(TARG,E,UC))"!=""
+	    @%set INST_DIRS=$(LIBDIRLOCAL_INST)
+	  %elseif "$(TOOLSEXT,UC,M$(TARG,E,UC))"!=""
+	    @echo Error: Can't local install tools ($(TARG))
+	    %continue
+	  %else
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %endif
+
+	  #do the copy, comparing first if targ is a header file
+	  %if ($(TARG,E)==".h") || ($(TARG,E)==".inc")
+	    %do inst_copy_if
+	  %else
+	    %do inst_copy
+	  %endif
+
+	%endfor
+
+# Install for just headers
+installh .PHONY:	$(INSTALL_TARGS,M.h$$,<.\) $(INSTALL_TARGS,M.inc$$,<.\)
+	%foreach TARG $**
+
+	  #figure out where to install to
+	  %if "$(TARG,E)"==""
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %elseif "$(LIBEXT,UC,M$(TARG,E,UC))"!=""
+	    @%set INST_DIRS=$(LIBDIRNET_INST) $(LIBDIRLOCAL_INST)
+	  %elseif "$(TOOLSEXT,UC,M$(TARG,E,UC))"!=""
+	    @%set INST_DIRS=$(TOOLSDIR)
+	  %else
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %endif
+
+	  #do the copy, comparing first if targ is a header file
+	  %if ($(TARG,E)==".h") || ($(TARG,E)==".inc")
+	    %do inst_copy_if
+	  %else
+	    %do inst_copy
+	  %endif
+
+	%endfor
+
+# Local Install for just headers
+linstallh .PHONY:	$(INSTALL_TARGS,M.h$$,<.\) $(INSTALL_TARGS,M.inc$$,<.\)
+	%foreach TARG $**
+
+	  #figure out where to install to
+	  %if "$(TARG,E)"==""
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %elseif "$(LIBEXT,UC,M$(TARG,E,UC))"!=""
+	    @%set INST_DIRS=$(LIBDIRLOCAL_INST)
+	  %elseif "$(TOOLSEXT,UC,M$(TARG,E,UC))"!=""
+	    @%error 1 Can't local install tools 
+	  %else
+	    @echo Error: don't know where to install $(TARG)
+	    %continue
+	  %endif
+
+	  #do the copy, comparing first if targ is a header file
+	  %if ($(TARG,E)==".h") || ($(TARG,E)==".inc")
+	    %do inst_copy_if
+	  %else
+	    %do inst_copy
+	  %endif
+
+	%endfor
+
+# "subroutine" to do install copy
+inst_copy .PHONY:
+	%foreach INST_DIR $(INST_DIRS)
+	  @copy $(TARG) $(INST_DIR) >nul
+	  %if $(INST_DIR) == $(INST_DIRS,1)
+	    @touch $(INST_DIR)\$(TARG)
+	  %else
+	    @touch -i $(INST_DIRS,1)\$(TARG) $(INST_DIR)\$(TARG)
+	  %endif
+	  @echo Installing $(TARG) to $(INST_DIR)
+	%endfor
+
+# like inst_copy, but do if files are different
+inst_copy_if .PHONY:
+	%foreach INST_DIR $(INST_DIRS)
+	  %if %exists($(INST_DIR)\$(TARG))
+	    --1 @diff $(TARG) $(INST_DIR)\$(TARG) >____temp.tmp
+	    %if ! -z ____temp.tmp
+	      %do inst_copy
+	    %endif
+	    @del ____temp.tmp
+	  %else
+	    %do inst_copy
+	  %endif
+	%endfor
+
+xtest .PHONY:
+	@echo cflags=$(CFLAGS)
+	@echo hrdpath.c=$(.HDRPATH.c)
+	@echo .path.h=$(.PATH.h)
+	@echo makeversion = $(MAKEVERSION)
+	@echo mkmfversion = $(MKMFVERSION)

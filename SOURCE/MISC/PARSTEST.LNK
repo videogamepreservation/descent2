@@ -1,0 +1,4 @@
+system dos4g option quiet debug all 
+file .\obj\parstest.obj
+library .\misc.lib
+name parstest

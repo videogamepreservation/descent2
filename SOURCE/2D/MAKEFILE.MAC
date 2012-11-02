@@ -1,0 +1,104 @@
+#
+# $Source: f:/miner/source/2d/rcs/makefile $
+# $Revision: 1.38 $
+# $Author: matt $
+# $Date: 1995/08/14 17:52:54 $
+#
+# Makefile for bios functions
+#
+
+# What to install, and where to install it
+INSTALL_TARGS = effect2d.h gr.h grdef.h gr.inc palette.h ibitblt.h rle.h pcx.h gr.lib
+
+# What to clean
+CLEAN_TARGS =
+
+# What libs to make
+LIBS = gr
+
+# What test programs to make
+TEST_PROGS =
+PROGS =
+
+# What object files for the lib
+GR_OBJS = canvas.obj bitmap.obj gr.obj font.obj \
+	bitblt.obj scanline.obj pixel.obj poly.obj disc.obj rect.obj box.obj  \
+	gpixel.obj line.obj  macstubs.obj blit.obj \
+	scalemac.obj circle.obj ibitblt.obj rle.obj pcx.obj
+#effects.obj roller.obj 
+
+# What object files and libs for the test programs
+
+#rules and targets common to all Miner makefiles
+.INCLUDE : "BigRed:miner2:init:makefile.def"
+
+### OPUS MKMF:  Do not remove this line!  Generated dependencies follow.
+
+bitblt.obj: fix.h gr.h grdef.h mem.h mono.h rle.h types.h
+
+bitmap.obj: dpmi.h error.h fix.h gr.h grdef.h malloc.h mem.h stdio.h \
+	 stdlib.h types.h
+
+box.obj: fix.h gr.h grdef.h mem.h types.h
+
+canvas.obj: error.h fix.h gr.h grdef.h malloc.h mem.h stdio.h stdlib.h \
+	 types.h
+
+circle.obj: fix.h gr.h grdef.h mem.h types.h
+
+disc.obj: fix.h gr.h grdef.h mem.h types.h
+
+effects.obj: effect2d.h fix.h gr.h grdef.h mem.h stdio.h stdlib.h types.h
+
+font.obj: cfile.h conio.h error.h fcntl.h fix.h gr.h grdef.h io.h mem.h \
+	 mono.h stat.h stdarg.h stdio.h stdlib.h string.h types.h
+
+gpixel.obj: fix.h gr.h grdef.h mem.h types.h
+
+gr.obj:	 conio.h dos.h dpmi.h error.h fix.h gr.h grdef.h i86.h malloc.h \
+	 mem.h mono.h palette.h stdio.h stdlib.h string.h types.h
+
+ibitblt.obj: conio.h dos.h error.h fix.h gr.h i86.h ibitblt.h mem.h stdio.h \
+	 stdlib.h types.h
+
+lbitblt.obj: fix.inc gr.inc psmacros.inc types.inc
+
+line.obj: clip.h fix.h gr.h grdef.h mem.h stdlib.h types.h
+
+linear.obj: psmacros.inc vgaregs.inc
+
+modex.obj: psmacros.inc tweak.inc vgaregs.inc
+
+mspeed.obj: conio.h fix.h gr.h grdef.h math.h stdio.h stdlib.h timer.h \
+	 types.h
+
+paging.obj: psmacros.inc types.inc
+
+palette.obj: cfile.h conio.h error.h fix.h gr.h grdef.h io.h key.h mem.h \
+	 mono.h stat.h stdio.h stdlib.h types.h
+
+pcx.obj: cfile.h fix.h gr.h mem.h pcx.h stdio.h stdlib.h string.h types.h
+
+pflow.obj: psmacros.inc types.inc
+
+pixel.obj: fix.h gr.h grdef.h mem.h types.h
+
+poly.obj: fix.h gr.h grdef.h mem.h types.h
+
+rect.obj: fix.h gr.h grdef.h mem.h types.h
+
+rle.obj: dpmi.h error.h fix.h gr.h grdef.h key.h malloc.h mem.h mono.h \
+	 stdio.h stdlib.h string.h types.h
+
+scale.obj: conio.h error.h fix.h gr.h limits.h math.h mono.h rle.h stdio.h \
+	 stdlib.h types.h
+
+scalea.obj: psmacros.inc types.inc
+
+scanline.obj: fix.h gr.h grdef.h mem.h types.h
+
+selector.obj: psmacros.inc types.inc
+
+vesa.obj: fix.inc gr.inc psmacros.inc types.inc vgaregs.inc
+
+vesatest.obj: conio.h fix.h gr.h malloc.h stdio.h stdlib.h types.h

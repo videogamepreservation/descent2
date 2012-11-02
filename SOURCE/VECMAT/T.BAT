@@ -1,0 +1,1 @@
+vectest >vectest.out

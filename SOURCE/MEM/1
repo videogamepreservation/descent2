@@ -1,0 +1,38 @@
+void mem_free( void * buffer )
+{
+	int id;
+
+	if (Initialized==0)
+		mem_init();
+
+	if (buffer==NULL  &&  (!out_of_memory))
+	{
+		fprintf( stderr, "\nMEM_FREE_NULL: An attempt was made to free the null pointer.\n" );
+		Warning( "MEM: Freeing the NULL pointer!" );
+		Int3();
+		return;
+	}
+
+	id = mem_find_id( buffer );
+
+	if (id==-1 &&  (!out_of_memory))
+	{
+		fprintf( stderr, "\nMEM_FREE_NOMALLOC: An attempt was made to free a ptr that wasn't\nallocated with mem.h included.\n" );
+		Warning( "MEM: Freeing a non-malloced pointer!" );
+		Int3();
+		return;
+	}
+	
+	mem_check_integrity( id );
+	
+	BytesMalloced -= MallocSize[id];
+
+	free( buffer );
+	
+	
+	Present[id] = 0;
+	MallocBase[id] = 0;
+	MallocSize[id] = 0;
+
+	free_list[ --num_blocks ] = id;
+}

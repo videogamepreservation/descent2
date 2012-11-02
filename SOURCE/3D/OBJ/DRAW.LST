@@ -1,0 +1,528 @@
+*** warning: Unexpected end of file on input at record 8 ***
+
+Module: \miner\source\3d\draw.asm
+
+Segment: _DATA  DWORD USE32  0000005c bytes  
+ 0000  24 49 64 3a 20 64 72 61                 - $Id: dra
+ 0008  77 2e 61 73 6d 20 31 2e                 - w.asm 1.
+ 0010  33 31 20 31 39 39 36 2f                 - 31 1996/
+ 0018  30 31 2f 30 38 20 31 35                 - 01/08 15
+ 0020  3a 30 30 3a 33 36 20 6d                 - :00:36 m
+ 0028  61 74 74 20 45 78 70 20                 - att Exp 
+ 0030  24 00 00 00                             - $...
+ 0034  00 00 00 00 00 00 00 00 L1              - ........
+ 003c  00 00 00 00                             - ....
+ 0040  00 00 00 00             L2              - ....
+ 0044  00 00 00 00             L3              - ....
+ 0048  00 00 00 00             L4              - ....
+ 004c  00 00 00 00             L5              - ....
+ 0050  00 00 00 00             L6              DD      draw_tmap_
+ 0054  00 00 00 00             L7              DD      gr_upoly_tmap_
+ 0058  00 00 00 00             L8              DD      gr_line_
+
+No disassembly errors
+
+------------------------------------------------------------
+
+Segment: _TEXT  DWORD USE32  000004eb bytes  
+ 0000                    g3_set_special_render:
+ 0000  0b c0                             or      eax,eax
+ 0002  75 06                             jne     L9
+ 0004  8d 05 00 00 00 00                 lea     eax,draw_tmap_
+ 000a  a3 00 00 00 00    L9              mov     L6,eax
+ 000f  0b d2                             or      edx,edx
+ 0011  75 06                             jne     L10
+ 0013  8d 15 00 00 00 00                 lea     edx,gr_upoly_tmap_
+ 0019  89 15 00 00 00 00 L10             mov     L7,edx
+ 001f  0b db                             or      ebx,ebx
+ 0021  75 06                             jne     L11
+ 0023  8d 1d 00 00 00 00                 lea     ebx,gr_line_
+ 0029  89 1d 00 00 00 00 L11             mov     L8,ebx
+ 002f  c3                                ret     
+ 0030  8a 46 20          g3_draw_line    mov     al,+20H[esi]
+ 0033  8a 67 20                          mov     ah,+20H[edi]
+ 0036  84 c4                             test    ah,al
+ 0038  75 5b                             jne     L15
+ 003a  0a c4                             or      al,ah
+ 003c  78 5a                             js      L16
+ 003e  f6 46 21 01                       test    byte ptr +21H[esi],01H
+ 0042  75 05                             jne     L12
+ 0044  e8 00 00 00 00                    call    g3_project_point
+ 0049  f6 46 21 02       L12             test    byte ptr +21H[esi],02H
+ 004d  75 49                             jne     L16
+ 004f  f6 47 21 01                       test    byte ptr +21H[edi],01H
+ 0053  75 09                             jne     L13
+ 0055  87 f7                             xchg    esi,edi
+ 0057  e8 00 00 00 00                    call    g3_project_point
+ 005c  87 f7                             xchg    esi,edi
+ 005e  f6 47 21 02       L13             test    byte ptr +21H[edi],02H
+ 0062  75 34                             jne     L16
+ 0064  53                                push    ebx
+ 0065  51                                push    ecx
+ 0066  52                                push    edx
+ 0067  84 c0                             test    al,al
+ 0069  8b 46 18                          mov     eax,+18H[esi]
+ 006c  8b 56 1c                          mov     edx,+1cH[esi]
+ 006f  8b 5f 18                          mov     ebx,+18H[edi]
+ 0072  8b 4f 1c                          mov     ecx,+1cH[edi]
+ 0075  74 0e                             je      L14
+ 0077  56                                push    esi
+ 0078  8b 35 00 00 00 00                 mov     esi,L8
+ 007e  ff d6                             call    esi
+ 0080  5e                                pop     esi
+ 0081  5a                                pop     edx
+ 0082  59                                pop     ecx
+ 0083  5b                                pop     ebx
+ 0084  c3                                ret     
+ 0085  56                L14             push    esi
+ 0086  8b 35 00 00 00 00                 mov     esi,L8
+ 008c  ff d6                             call    esi
+ 008e  5e                                pop     esi
+ 008f  5a                                pop     edx
+ 0090  59                                pop     ecx
+ 0091  5b                                pop     ebx
+ 0092  b0 01                             mov     al,01H
+ 0094  c3                                ret     
+ 0095  32 c0             L15             xor     al,al
+ 0097  c3                                ret     
+ 0098  e8 00 00 00 00    L16             call    clip_line
+ 009d  e8 8e ff ff ff                    call    g3_draw_line
+ 00a2  f6 46 21 04                       test    byte ptr +21H[esi],04H
+ 00a6  74 05                             je      L17
+ 00a8  e8 00 00 00 00                    call    free_temp_point
+ 00ad  f6 47 21 04       L17             test    byte ptr +21H[edi],04H
+ 00b1  74 07                             je      L18
+ 00b3  87 f7                             xchg    esi,edi
+ 00b5  e8 00 00 00 00                    call    free_temp_point
+ 00ba  f7 05 00 00 00 00 
+       ff ff ff ff       L18             test    dword ptr free_point_num,0ffffffffH
+ 00c4  75 02                             jne     L19
+ 00c6  eb 43                             jmp     L22
+ 00c8  66 9c             L19             pushf   
+ 00ca  50                                push    eax
+ 00cb  eb 2b                             jmp     L21
+ 00cd  45                L20             inc     ebp
+ 00ce  72 72                             jb      L24
+ 00d0  6f                                outsd   
+ 00d1  72 3a                             jb      L23
+ 00d3  20 66 72                          and     +72H[esi],ah
+ 00d6  65 65 5f                          pop     edi
+ 00d9  70 6f                             jo      L25
+ 00db  69 6e 74 5f 6e 75 
+       6d                                imul    ebp,+74H[esi],6d756e5fH
+ 00e2  20 21                             and     [ecx],ah
+ 00e4  3d 20 30 20 69                    cmp     eax,69203020H
+ 00e9  6e                                outsb   
+ 00ea  20 67 33                          and     +33H[edi],ah
+ 00ed  5f                                pop     edi
+ 00ee  65 6e                             outs    dx,byte ptr gs:[esi]
+ 00f0  64 5f                             pop     edi
+ 00f2  66 72 61                          jb      L26
+ 00f5  6d                                insd    
+ 00f6  65 00 68 00                       add     gs:L20[eax],ch
+ 00fa  00 00                             add     [eax],al
+ 00fc  00 6a 00                          add     +0H[edx],ch
+ 00ff  e8 00 00 00 00                    call    mprintf_
+ 0104  83 c4 08                          add     esp,00000008H
+ 0107  58                                pop     eax
+ 0108  66 9d                             popf    
+ 010a  cc                                int     3
+ 010b  c7 05 00 00 00 00 
+       00 00 00 00       L22             mov     dword ptr free_point_num,00000000H
+ 0115  c3                                ret     
+ 0116                    g3_check_normal_facing:
+ 0116  57                                push    edi
+ 0117  8d 05 00 00 00 00                 lea     eax,L1
+ 011d  8b fe                             mov     edi,esi
+ 011f  8d 35 00 00 00 00                 lea     esi,View_position
+ 0125  e8 00 00 00 00                    call    vm_vec_sub
+ 012a  8b f0                             mov     esi,eax
+ 012c  5f                                pop     edi
+ 012d  e8 00 00 00 00                    call    vm_vec_dotprod
+ 0132  0b c0                             or      eax,eax
+ 0134  0f 9f c0                          setg    al
+ 0137  c3                                ret     
+ 0138                    g3_check_and_draw_poly:
+ 0138  e8 1f 00 00 00                    call    L27
+ 013d  0a c0                             or      al,al
+ 013f  0f 85 9a 00 00 00                 jne     g3_draw_poly
+ 0145  b0 ff                             mov     al,0ffH
+ 0147  c3                                ret     
+ 0148                    g3_check_and_draw_tmap:
+ 0148  53                                push    ebx
+ 0149  8b d8                             mov     ebx,eax
+ 014b  e8 0c 00 00 00                    call    L27
+ 0150  5b                                pop     ebx
+ 0151  0a c0                             or      al,al
+ 0153  0f 85 a3 01 00 00                 jne     g3_draw_tmap
+ 0159  b0 ff                             mov     al,0ffH
+ 015b  c3                                ret     
+ 015c  85 ff             L27             test    edi,edi
+ 015e  74 57                             je      L32
+ 0160  8b 07                             mov     eax,[edi]
+ 0162  0b 47 04                          or      eax,+4H[edi]
+ 0165  0b 47 08                          or      eax,+8H[edi]
+ 0168  74 02                             je      L28
+ 016a  eb 3e                             jmp     L31
+ 016c  66 9c             L28             pushf   
+ 016e  50                                push    eax
+ 016f  eb 26                             jmp     L30
+ 0171  5a                L29             pop     edx
+ 0172  65 72 6f                          jb      L33
+ 0175  2d 6c 65 6e 67                    sub     eax,676e656cH
+ 017a  74 68                             je      L33
+ 017c  20 6e 6f                          and     +6fH[esi],ch
+ 017f  72 6d                             jb      L35
+ 0181  61                                popad   
+ 0182  6c                                insb    
+ 0183  20 69 6e                          and     +6eH[ecx],ch
+ 0186  20 64 6f 5f                       and     +5fH[edi+ebp*2],ah
+ 018a  66 61                             popa    
+ 018c  63 69 6e                          arpl    ebp,+6eH[ecx]
+ 018f  67 5f                             pop     edi
+ 0191  63 68 65                          arpl    ebp,+65H[eax]
+ 0194  63 6b 00                          arpl    ebp,+0H[ebx]
+ 0197  68 00 00 00 00    L30             push    offset L29
+ 019c  6a 00                             push    00000000H
+ 019e  e8 00 00 00 00                    call    mprintf_
+ 01a3  83 c4 08                          add     esp,00000008H
+ 01a6  58                                pop     eax
+ 01a7  66 9d                             popf    
+ 01a9  cc                                int     3
+ 01aa  56                L31             push    esi
+ 01ab  8b f3                             mov     esi,ebx
+ 01ad  e8 64 ff ff ff                    call    g3_check_normal_facing
+ 01b2  5e                                pop     esi
+ 01b3  0f 9f c0                          setg    al
+ 01b6  c3                                ret     
+ 01b7  53                L32             push    ebx
+ 01b8  51                                push    ecx
+ 01b9  52                                push    edx
+ 01ba  56                                push    esi
+ 01bb  8b 06                             mov     eax,[esi]
+ 01bd  8b 7e 08                          mov     edi,+8H[esi]
+ 01c0  8b 76 04                          mov     esi,+4H[esi]
+ 01c3  8d 1d 00 00 00 00                 lea     ebx,L1
+ 01c9  e8 00 00 00 00                    call    vm_vec_perp
+ 01ce  8b f8                             mov     edi,eax
+ 01d0  e8 00 00 00 00                    call    vm_vec_dotprod
+ 01d5  0b c0                             or      eax,eax
+ 01d7  5e                                pop     esi
+ 01d8  5a                                pop     edx
+ 01d9  59                                pop     ecx
+ 01da  5b                                pop     ebx
+ 01db  0f 98 c0                          sets    al
+ 01de  c3                                ret     
+ 01df  53                g3_draw_poly    push    ebx
+ 01e0  57                                push    edi
+ 01e1  8d 3d 00 00 00 00                 lea     edi,Vbuf0
+ 01e7  33 db                             xor     ebx,ebx
+ 01e9  66 ba 00 ff                       mov     dx,0ff00H
+ 01ed  8b 04 9e          L34             mov     eax,[esi+ebx*4]
+ 01f0  89 04 9f                          mov     [edi+ebx*4],eax
+ 01f3  22 70 20                          and     dh,+20H[eax]
+ 01f6  0a 50 20                          or      dl,+20H[eax]
+ 01f9  43                                inc     ebx
+ 01fa  3b d9                             cmp     ebx,ecx
+ 01fc  75 ef                             jne     L34
+ 01fe  84 f6                             test    dh,dh
+ 0200  75 55                             jne     L39
+ 0202  84 d2                             test    dl,dl
+ 0204  78 57                             js      L41
+ 0206  75 55                             jne     L41
+ 0208  52                L36             push    edx
+ 0209  8b d7                             mov     edx,edi
+ 020b  33 db                             xor     ebx,ebx
+ 020d  8d 3d 00 00 00 00                 lea     edi,Vertex_list
+ 0213  8b 34 9a          L37             mov     esi,[edx+ebx*4]
+ 0216  f6 46 21 01                       test    byte ptr +21H[esi],01H
+ 021a  75 05                             jne     L38
+ 021c  e8 00 00 00 00                    call    g3_project_point
+ 0221  f6 46 21 02       L38             test    byte ptr +21H[esi],02H
+ 0225  75 35                             jne     L40
+ 0227  8b 46 18                          mov     eax,+18H[esi]
+ 022a  89 04 df                          mov     [edi+ebx*8],eax
+ 022d  8b 46 1c                          mov     eax,+1cH[esi]
+ 0230  89 44 df 04                       mov     +4H[edi+ebx*8],eax
+ 0234  43                                inc     ebx
+ 0235  3b d9                             cmp     ebx,ecx
+ 0237  75 da                             jne     L37
+ 0239  8b c1                             mov     eax,ecx
+ 023b  8b d7                             mov     edx,edi
+ 023d  5b                                pop     ebx
+ 023e  51                                push    ecx
+ 023f  8b 0d 00 00 00 00                 mov     ecx,L7
+ 0245  ff d1                             call    ecx
+ 0247  59                                pop     ecx
+ 0248  5f                                pop     edi
+ 0249  5b                                pop     ebx
+ 024a  32 c0                             xor     al,al
+ 024c  c3                                ret     
+ 024d  e8 00 00 00 00                    call    gr_upoly_tmap_
+ 0252  5f                                pop     edi
+ 0253  5b                                pop     ebx
+ 0254  32 c0                             xor     al,al
+ 0256  c3                                ret     
+ 0257  5f                L39             pop     edi
+ 0258  5b                                pop     ebx
+ 0259  b0 01                             mov     al,01H
+ 025b  c3                                ret     
+ 025c  5a                L40             pop     edx
+ 025d  8d 35 00 00 00 00 L41             lea     esi,Vbuf0
+ 0263  8d 3d 00 00 00 00                 lea     edi,Vbuf1
+ 0269  8a c2                             mov     al,dl
+ 026b  e8 00 00 00 00                    call    clip_polygon
+ 0270  8b fe                             mov     edi,esi
+ 0272  e3 13                             jcxz    L43
+ 0274  0a f6                             or      dh,dh
+ 0276  75 0f                             jne     L43
+ 0278  84 d2                             test    dl,dl
+ 027a  78 0b                             js      L43
+ 027c  57                                push    edi
+ 027d  68 00 00 00 00                    push    offset L42
+ 0282  53                                push    ebx
+ 0283  57                                push    edi
+ 0284  eb 82                             jmp     L36
+ 0286  5f                L42             pop     edi
+ 0287  50                L43             push    eax
+ 0288  33 db                             xor     ebx,ebx
+ 028a  8b 34 9f          L44             mov     esi,[edi+ebx*4]
+ 028d  f6 46 21 04                       test    byte ptr +21H[esi],04H
+ 0291  74 05                             je      L45
+ 0293  e8 00 00 00 00                    call    free_temp_point
+ 0298  43                L45             inc     ebx
+ 0299  3b d9                             cmp     ebx,ecx
+ 029b  75 ed                             jne     L44
+ 029d  f7 05 00 00 00 00 
+       ff ff ff ff                       test    dword ptr free_point_num,0ffffffffH
+ 02a7  75 02                             jne     L46
+ 02a9  eb 43                             jmp     L49
+ 02ab  66 9c             L46             pushf   
+ 02ad  50                                push    eax
+ 02ae  eb 2b                             jmp     L48
+ 02b0  45                L47             inc     ebp
+ 02b1  72 72                             jb      L51
+ 02b3  6f                                outsd   
+ 02b4  72 3a                             jb      L50
+ 02b6  20 66 72                          and     +72H[esi],ah
+ 02b9  65 65 5f                          pop     edi
+ 02bc  70 6f                             jo      L53
+ 02be  69 6e 74 5f 6e 75 
+       6d                                imul    ebp,+74H[esi],6d756e5fH
+ 02c5  20 21                             and     [ecx],ah
+ 02c7  3d 20 30 20 69                    cmp     eax,69203020H
+ 02cc  6e                                outsb   
+ 02cd  20 67 33                          and     +33H[edi],ah
+ 02d0  5f                                pop     edi
+ 02d1  65 6e                             outs    dx,byte ptr gs:[esi]
+ 02d3  64 5f                             pop     edi
+ 02d5  66 72 61                          jb      L54
+ 02d8  6d                                insd    
+ 02d9  65 00 68 00                       add     gs:L47[eax],ch
+ 02dd  00 00                             add     [eax],al
+ 02df  00 6a 00                          add     +0H[edx],ch
+ 02e2  e8 00 00 00 00                    call    mprintf_
+ 02e7  83 c4 08                          add     esp,00000008H
+ 02ea  58                                pop     eax
+ 02eb  66 9d                             popf    
+ 02ed  cc                                int     3
+ 02ee  c7 05 00 00 00 00 
+       00 00 00 00       L49             mov     dword ptr free_point_num,00000000H
+ 02f8  58                                pop     eax
+ 02f9  5f                                pop     edi
+ 02fa  5b                                pop     ebx
+ 02fb  c3                                ret     
+ 02fc  89 15 00 00 00 00 g3_draw_tmap    mov     L4,edx
+ 0302  53                                push    ebx
+ 0303  57                                push    edi
+ 0304  8d 3d 00 00 00 00                 lea     edi,Vbuf0
+ 030a  55                                push    ebp
+ 030b  8b eb                             mov     ebp,ebx
+ 030d  89 1d 00 00 00 00                 mov     L5,ebx
+ 0313  89 0d 00 00 00 00                 mov     L2,ecx
+ 0319  c1 e1 02                          shl     ecx,02H
+ 031c  b6 ff                             mov     dh,0ffH
+ 031e  89 0d 00 00 00 00                 mov     L3,ecx
+ 0324  33 db                             xor     ebx,ebx
+ 0326  32 d2                             xor     dl,dl
+ 0328  8b 04 33          L52             mov     eax,[ebx+esi]
+ 032b  89 04 3b                          mov     [ebx+edi],eax
+ 032e  22 70 20                          and     dh,+20H[eax]
+ 0331  0a 50 20                          or      dl,+20H[eax]
+ 0334  8b 4d 00                          mov     ecx,+0H[ebp]
+ 0337  83 c5 04                          add     ebp,00000004H
+ 033a  89 48 0c                          mov     +0cH[eax],ecx
+ 033d  8b 4d 00                          mov     ecx,+0H[ebp]
+ 0340  83 c5 04                          add     ebp,00000004H
+ 0343  89 48 10                          mov     +10H[eax],ecx
+ 0346  8b 4d 00                          mov     ecx,+0H[ebp]
+ 0349  83 c5 04                          add     ebp,00000004H
+ 034c  89 48 14                          mov     +14H[eax],ecx
+ 034f  80 48 21 18                       or      byte ptr +21H[eax],18H
+ 0353  83 c3 04                          add     ebx,00000004H
+ 0356  3b 1d 00 00 00 00                 cmp     ebx,L3
+ 035c  75 ca                             jne     L52
+ 035e  5d                                pop     ebp
+ 035f  84 f6                             test    dh,dh
+ 0361  75 7c                             jne     L65
+ 0363  84 d2                             test    dl,dl
+ 0365  75 7d                             jne     L66
+ 0367  8b d7             L55             mov     edx,edi
+ 0369  33 db                             xor     ebx,ebx
+ 036b  8b 34 9a          L56             mov     esi,[edx+ebx*4]
+ 036e  f6 46 21 01                       test    byte ptr +21H[esi],01H
+ 0372  75 05                             jne     L57
+ 0374  e8 00 00 00 00                    call    g3_project_point
+ 0379  f6 46 21 02       L57             test    byte ptr +21H[esi],02H
+ 037d  75 02                             jne     L58
+ 037f  eb 37                             jmp     L62
+ 0381  66 9c             L58             pushf   
+ 0383  50                                push    eax
+ 0384  eb 1f                             jmp     L60
+ 0386  53                L59             push    ebx
+ 0387  68 6f 75 6c 64                    push    646c756fH
+ 038c  20 6e 6f                          and     +6fH[esi],ch
+ 038f  74 20                             je      L61
+ 0391  6f                                outsd   
+ 0392  76 65                             jbe     L67
+ 0394  72 66                             jb      L68
+ 0396  6c                                insb    
+ 0397  6f                                outsd   
+ 0398  77 20                             ja      L63
+ 039a  61                                popad   
+ 039b  66 74 65                          je      L69
+ 039e  72 20                             jb      L64
+ 03a0  63 6c 69 70                       arpl    ebp,+70H[ecx+ebp*2]
+ 03a4  00 68 00                          add     L59[eax],ch
+ 03a7  00 00                             add     [eax],al
+ 03a9  00 6a 00                          add     +0H[edx],ch
+ 03ac  e8 00 00 00 00                    call    mprintf_
+ 03b1  83 c4 08          L61             add     esp,00000008H
+ 03b4  58                                pop     eax
+ 03b5  66 9d                             popf    
+ 03b7  cc                                int     3
+ 03b8  75 25             L62             jne     L65
+ 03ba  43                L63             inc     ebx
+ 03bb  3b 1d 00 00 00 00                 cmp     ebx,L2
+ 03c1  75 a8                             jne     L56
+ 03c3  a1 00 00 00 00                    mov     eax,L4
+ 03c8  8b 15 00 00 00 00                 mov     edx,L2
+ 03ce  8b df                             mov     ebx,edi
+ 03d0  51                                push    ecx
+ 03d1  8b 0d 00 00 00 00                 mov     ecx,L6
+ 03d7  ff d1                             call    ecx
+ 03d9  59                                pop     ecx
+ 03da  5f                                pop     edi
+ 03db  5b                                pop     ebx
+ 03dc  32 c0                             xor     al,al
+ 03de  c3                                ret     
+ 03df  5f                L65             pop     edi
+ 03e0  5b                                pop     ebx
+ 03e1  b0 01                             mov     al,01H
+ 03e3  c3                                ret     
+ 03e4  8d 35 00 00 00 00 L66             lea     esi,Vbuf0
+ 03ea  8d 3d 00 00 00 00                 lea     edi,Vbuf1
+ 03f0  8a c2                             mov     al,dl
+ 03f2  8b 0d 00 00 00 00                 mov     ecx,L2
+ 03f8  e8 00 00 00 00                    call    clip_polygon
+ 03fd  89 0d 00 00 00 00                 mov     L2,ecx
+ 0403  8b fe             L69             mov     edi,esi
+ 0405  e3 16                             jcxz    L71
+ 0407  0a f6                             or      dh,dh
+ 0409  75 12                             jne     L71
+ 040b  84 d2                             test    dl,dl
+ 040d  78 0e                             js      L71
+ 040f  57                                push    edi
+ 0410  68 00 00 00 00                    push    offset L70
+ 0415  53                                push    ebx
+ 0416  57                                push    edi
+ 0417  e9 4b ff ff ff                    jmp     L55
+ 041c  5f                L70             pop     edi
+ 041d  8b d9             L71             mov     ebx,ecx
+ 041f  50                                push    eax
+ 0420  4b                                dec     ebx
+ 0421  c1 e3 02                          shl     ebx,02H
+ 0424  8b 34 3b          L72             mov     esi,[ebx+edi]
+ 0427  f6 46 21 04                       test    byte ptr +21H[esi],04H
+ 042b  74 05                             je      L73
+ 042d  e8 00 00 00 00                    call    free_temp_point
+ 0432  83 eb 04          L73             sub     ebx,00000004H
+ 0435  79 ed                             jns     L72
+ 0437  f7 05 00 00 00 00 
+       ff ff ff ff                       test    dword ptr free_point_num,0ffffffffH
+ 0441  75 02                             jne     L74
+ 0443  eb 43                             jmp     L77
+ 0445  66 9c             L74             pushf   
+ 0447  50                                push    eax
+ 0448  eb 2b                             jmp     L76
+ 044a  45                L75             inc     ebp
+ 044b  72 72                             jb      L80
+ 044d  6f                                outsd   
+ 044e  72 3a                             jb      L78
+ 0450  20 66 72                          and     +72H[esi],ah
+ 0453  65 65 5f                          pop     edi
+ 0456  70 6f                             jo      L81
+ 0458  69 6e 74 5f 6e 75 
+       6d                                imul    ebp,+74H[esi],6d756e5fH
+ 045f  20 21                             and     [ecx],ah
+ 0461  3d 20 30 20 69                    cmp     eax,69203020H
+ 0466  6e                                outsb   
+ 0467  20 67 33                          and     +33H[edi],ah
+ 046a  5f                                pop     edi
+ 046b  65 6e                             outs    dx,byte ptr gs:[esi]
+ 046d  64 5f                             pop     edi
+ 046f  66 72 61                          jb      L83
+ 0472  6d                                insd    
+ 0473  65 00 68 00                       add     gs:L75[eax],ch
+ 0477  00 00                             add     [eax],al
+ 0479  00 6a 00                          add     +0H[edx],ch
+ 047c  e8 00 00 00 00                    call    mprintf_
+ 0481  83 c4 08                          add     esp,00000008H
+ 0484  58                                pop     eax
+ 0485  66 9d                             popf    
+ 0487  cc                                int     3
+ 0488  c7 05 00 00 00 00 
+       00 00 00 00       L77             mov     dword ptr free_point_num,00000000H
+ 0492  58                                pop     eax
+ 0493  5f                                pop     edi
+ 0494  5b                                pop     ebx
+ 0495  c3                                ret     
+ 0496  f6 46 20 80       g3_draw_sphere  test    byte ptr +20H[esi],80H
+ 049a  75 4e                             jne     L84
+ 049c  f6 46 21 01                       test    byte ptr +21H[esi],01H
+ 04a0  75 05                             jne     L79
+ 04a2  e8 00 00 00 00                    call    g3_project_point
+ 04a7  f6 46 21 02       L79             test    byte ptr +21H[esi],02H
+ 04ab  75 3d                             jne     L84
+ 04ad  50                                push    eax
+ 04ae  53                                push    ebx
+ 04af  51                                push    ecx
+ 04b0  52                                push    edx
+ 04b1  8b c1                             mov     eax,ecx
+ 04b3  f7 2d 00 00 00 00                 imul    dword ptr Matrix_scale
+ 04b9  0f ac d0 10                       shrd    eax,edx,10H
+ 04bd  f7 2d 00 00 00 00                 imul    dword ptr Canv_w2
+ 04c3  51                sphere_proj_div push    ecx
+ 04c4  8b ca                             mov     ecx,edx
+ 04c6  0b c9                             or      ecx,ecx
+ 04c8  79 02                             jns     L82
+ 04ca  f7 d9                             neg     ecx
+ 04cc  0f a4 c1 01       L82             shld    ecx,eax,01H
+ 04d0  3b 4e 08                          cmp     ecx,+8H[esi]
+ 04d3  59                L83             pop     ecx
+ 04d4  73 10                             jae     sphere_div_overflow_handler
+ 04d6  f7 7e 08                          idiv    dword ptr +8H[esi]
+ 04d9  8b d8                             mov     ebx,eax
+ 04db  8b 46 18                          mov     eax,+18H[esi]
+ 04de  8b 56 1c                          mov     edx,+1cH[esi]
+ 04e1  e8 00 00 00 00                    call    gr_disk_
+ 04e6                    sphere_div_overflow_handler:
+ 04e6  5a                                pop     edx
+ 04e7  59                                pop     ecx
+ 04e8  5b                                pop     ebx
+ 04e9  58                                pop     eax
+ 04ea  c3                L84             ret     
+
+No disassembly errors
+
+------------------------------------------------------------

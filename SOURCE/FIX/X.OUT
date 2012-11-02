@@ -1,0 +1,3 @@
+  fixtest.obj <- (does not exist)
+wcc386 flags: /zq /zld /w3 /on /oa /I=. /I=h:\miner\source\lib /I=t:\w95\h /I=t:\w95\h\sys /d2     /fo=.\obj\fixtest.obj
+wcc386 fixtest.c
